@@ -24,10 +24,21 @@ class NewInt {
 			const uint16_t len = input.length();
 			if (valid_input) {
 				// convert input to op elements
+				uint16_t count = 16;
+				std::string substr = input;
 				
 			} else {
 				throw wrong_type_error("input has to be hexadecimal");
 			}
+		}
+		
+		// numerical input
+		NewInt(__uint128_t input) {
+			// uint128_t input to 2 uint64_t integers
+		    static constexpr const __uint128_t bottom_mask = (__uint128_t{1} << 64) - 1; // 0xffffffffffffffffULL
+		    static constexpr const __uint128_t top_mask = ~bottom_mask; // 0xffffffffffffffff0000000000000000U
+			op[0] = input&bottom_mask;
+			op[1] = (input&top_mask) >> 64;
 		}
 
 		NewInt(uint64_t* input, uint16_t len)
@@ -166,6 +177,7 @@ class uint256_t : public NewInt<256>
 	public:
 		uint256_t(std::string num); // num: uint256 number as base 10 string
 		inline uint256_t(uint64_t *num); // num: uint256 number as array
+		inline uint256_t(__uint128_t num); // numerical uint128_t input
 		inline uint256_t(); // no input declaration (num=0)
 
 };

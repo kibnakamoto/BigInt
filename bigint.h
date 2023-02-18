@@ -16,7 +16,7 @@ class NewInt {
 	public:
 		// operator array
 		const static constexpr uint16_t op_size = bitsize/64;
-		uint64_t op[op_size];
+		uint64_t op[op_size]; // when iterating, start from end to start
 
 		NewInt(std::string input)
 		{
@@ -31,17 +31,21 @@ class NewInt {
 				throw wrong_type_error("input has to be hexadecimal");
 			}
 		}
-		
-		// numerical input
-		NewInt(__uint128_t input) {
+
+		// numerical input. If number is 256-bit, input = left 128-bit, right 128-bit
+		template<size_t count> // number of arguements
+		NewInt(__uint128_t input, ...) {
 			// uint128_t input to 2 uint64_t integers
-		    static constexpr const __uint128_t bottom_mask = (__uint128_t{1} << 64) - 1; // 0xffffffffffffffffULL
-		    static constexpr const __uint128_t top_mask = ~bottom_mask; // 0xffffffffffffffff0000000000000000U
-			op[0] = input&bottom_mask;
-			op[1] = (input&top_mask) >> 64;
+		    static constexpr const __uint128_t bottom_mask = (__uint128_t{1} << 64) - 1; // 0x0000000000000000ffffffffffffffffU
+		    static constexpr const __uint128_t top_mask = ~bottom_mask; 				 // 0xffffffffffffffff0000000000000000U
+			for(uint8_t i=0;i<count;i++) {
+				__uint128_t num = *((__uint128_t*)&input + i);
+				op[op_size-i-1] = num&bottom_mask;
+				op[op_size-i-2] = (num&top_mask) >> 64;
+			}
 		}
 
-		NewInt(uint64_t* input, uint16_t len)
+		NewInt(uint64_t* input, uint16_t len) // input order has to be: input[0] = most left 64-bit
 		{
 			// add input to operator array
 			for(uint16_t i=0;i<len;i++) op[i] = input[i];
@@ -179,7 +183,6 @@ class uint256_t : public NewInt<256>
 		inline uint256_t(uint64_t *num); // num: uint256 number as array
 		inline uint256_t(__uint128_t num); // numerical uint128_t input
 		inline uint256_t(); // no input declaration (num=0)
-
 };
 
 #endif /* BIGINT_H */

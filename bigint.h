@@ -24,12 +24,12 @@ class NewInt {
 			const uint16_t len = input.length();
 			if (valid_input) {
 				// convert hex input to op elements
-				const uint16_t multiple16_count = len/16;
-				std::string substr;
+				const uint8_t ind = len%16;
+				const uint16_t multiple16_count = (len-ind)/16;
+				op[multiple16_count] = static_cast<uint64_t>(std::stoull(input.substr(0,ind)));
 				uint64_t *tmp = new uint64_t[multiple16_count];
 				for(uint16_t i=0;i<multiple16_count;i++) {
-					substr = input.substr(i*16,16);
-					tmp[i] = static_cast<uint64_t>(std::stoull(substr));
+					tmp[i] = static_cast<uint64_t>(std::stoull(input.substr(i*16+ind,16)));
 				}
 				for(uint64_t i=multiple16_count;i>=0;i++) op[op_size-i-1] = tmp[i];
 				delete[] tmp;

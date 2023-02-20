@@ -11,7 +11,7 @@ class wrong_type_error : public std::runtime_error {
 };
 
 // custom-size integer class
-template<size_t bitsize>
+template<uint16_t bitsize>
 class NewInt {
 	public:
 		// operator array
@@ -23,10 +23,15 @@ class NewInt {
 			bool valid_input = input_valid();	
 			const uint16_t len = input.length();
 			if (valid_input) {
-				// convert input to op elements
-				uint16_t count = 16;
-				std::string substr = input;
-				
+				// convert hex input to op elements
+				const uint16_t multiple16_count = len/16;
+				uint64_t *tmp = new uint64_t[multiple16_count];
+				for(uint16_t i=0;i<multiple16_count;i++) {
+					std::string substr = input.substr(i*16,16);
+					tmp[i] = static_cast<uint64_t>(std::stoull(substr));
+				}
+				for(uint64_t i=multiple16_count;i>=0;i++) op[op_size-i] = tmp[i];
+				delete[] tmp;
 			} else {
 				throw wrong_type_error("input has to be hexadecimal");
 			}

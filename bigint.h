@@ -25,13 +25,16 @@ class NewInt {
 			if (valid_input) {
 				// convert hex input to op elements
 				const uint16_t multiple16_count = len/16;
+				std::string substr;
 				uint64_t *tmp = new uint64_t[multiple16_count];
 				for(uint16_t i=0;i<multiple16_count;i++) {
-					std::string substr = input.substr(i*16,16);
+					substr = input.substr(i*16,16);
 					tmp[i] = static_cast<uint64_t>(std::stoull(substr));
 				}
-				for(uint64_t i=multiple16_count;i>=0;i++) op[op_size-i] = tmp[i];
+				for(uint64_t i=multiple16_count;i>=0;i++) op[op_size-i-1] = tmp[i];
 				delete[] tmp;
+
+				// get the last smaller-than-16-byte end of input
 			} else {
 				throw wrong_type_error("input has to be hexadecimal");
 			}

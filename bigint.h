@@ -12,61 +12,66 @@ class wrong_type_error : public std::runtime_error {
 
 // custom-size integer class
 template<uint16_t bitsize>
-class NewInt {
+class BigInt {
 	protected:
+
 		// operator array
-		const static constexpr uint16_t op_size = bitsize/64;
+		constexpr const static uint16_t op_size = bitsize%64==0 ? bitsize/64 : bitsize/64+1;
 		uint64_t op[op_size]; // when iterating, start from end to start
 		uint16_t op_nonleading_i; // index of op when leading zeros end
 	public:
-		NewInt(std::string input);
+		const constexpr static uint16_t size = bitsize;
+		BigInt(std::string input);
 
 		// numerical input. If number is 256-bit, input = left 128-bit, right 128-bit
 		template<size_t count> // number of arguements
-		NewInt(__uint128_t input, ...);
+		BigInt(__uint128_t input, ...);
 
 		// input as operation array
-		NewInt(uint64_t* input, uint16_t len);
+		BigInt(uint64_t *input, uint16_t len);
 
 		// decleration
-		constexpr NewInt() = default;
+		constexpr BigInt() = default;
+
+		// destructors
+		~BigInt();
 
 		// assign uint256 to another uint256
-		NewInt operator=(const NewInt &num);
+		BigInt operator=(const BigInt &num);
 
 		// arithmetic operations
-		NewInt operator+(const NewInt &num);
-		NewInt operator+=(const NewInt &num);
-		NewInt operator-(const NewInt &num);
-		NewInt operator-=(const NewInt &num);
-		NewInt operator*(const NewInt &num);
-		NewInt operator*=(const NewInt &num);
-		NewInt operator/(const NewInt &num);
-		NewInt operator/=(const NewInt &num);
+		BigInt operator+(const BigInt &num);
+		BigInt operator+=(const BigInt &num);
+		BigInt operator-(const BigInt &num);
+		BigInt operator-=(const BigInt &num);
+		BigInt operator*(const BigInt &num);
+		BigInt operator*=(const BigInt &num);
+		BigInt operator/(const BigInt &num);
+		BigInt operator/=(const BigInt &num);
 
 		// bitwise operators
-		NewInt operator~() const;
-		NewInt operator&(const NewInt &num);
-		NewInt operator&=(const NewInt &num);
-		NewInt operator^(const NewInt &num);
-		NewInt operator^=(const NewInt &num);
-		NewInt operator>>(const NewInt &num);
-		NewInt operator>>=(const NewInt &num);
-		NewInt operator<<(const NewInt &num);
-		NewInt operator<<=(const NewInt &num);
-		NewInt operator|(const NewInt &num);
-		NewInt operator|=(const NewInt &num);
+		BigInt operator~() const;
+		BigInt operator&(const BigInt &num);
+		BigInt operator&=(const BigInt &num);
+		BigInt operator^(const BigInt &num);
+		BigInt operator^=(const BigInt &num);
+		BigInt operator>>(const BigInt &num);
+		BigInt operator>>=(const BigInt &num);
+		BigInt operator<<(const BigInt &num);
+		BigInt operator<<=(const BigInt &num);
+		BigInt operator|(const BigInt &num);
+		BigInt operator|=(const BigInt &num);
 
 		// boolean operators
-		NewInt operator&&(const NewInt &num);
-		NewInt operator||(const NewInt &num);
-		NewInt operator==(const NewInt &num);
-		NewInt operator!();
-		NewInt operator!=(const NewInt &num);
-		NewInt operator<(const NewInt &num);
-		NewInt operator<=(const NewInt &num);
-		NewInt operator>(const NewInt &num);
-		NewInt operator>=(const NewInt &num);
+		BigInt operator&&(const BigInt &num);
+		BigInt operator||(const BigInt &num);
+		BigInt operator==(const BigInt &num);
+		BigInt operator!();
+		BigInt operator!=(const BigInt &num);
+		BigInt operator<(const BigInt &num);
+		BigInt operator<=(const BigInt &num);
+		BigInt operator>(const BigInt &num);
+		BigInt operator>=(const BigInt &num);
 
 	protected:
 		// return carry on a 64-bit number
@@ -139,7 +144,7 @@ class NewInt {
  
 // output stream operator
 template<size_t bitsize>
-std::ostream& operator<<(std::ostream& out, NewInt<bitsize> toprint)
+std::ostream& operator<<(std::ostream& out, BigInt<bitsize> toprint)
 {
 	for(uint16_t i=0;i<toprint.op_size;i++) {
 			if(toprint.op[i])
@@ -150,10 +155,10 @@ std::ostream& operator<<(std::ostream& out, NewInt<bitsize> toprint)
  
 // input stream operator
 template<size_t bitsize>
-std::istream& operator>>(std::istream& out, NewInt<bitsize> toprint);
+std::istream& operator>>(std::istream& out, BigInt<bitsize> toprint);
 
 // declare class uint256
-class uint256_t : public NewInt<256>
+class uint256_t : public BigInt<256>
 {
 	public:
 		uint256_t(std::string num); // num: uint256 number as base 10 string

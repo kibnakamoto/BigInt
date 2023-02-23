@@ -7,7 +7,7 @@
 #include "bigint.h"
 
 template<uint16_t bitsize>
-NewInt<bitsize>::NewInt(std::string input)
+BigInt<bitsize>::BigInt(std::string input)
 {
     bool valid_input = input_valid();
     const uint16_t len = input.length();
@@ -38,7 +38,7 @@ NewInt<bitsize>::NewInt(std::string input)
 // numerical input. If number is 256-bit, input = left 128-bit, right 128-bit
 template<uint16_t bitsize> 
 template<size_t count> // number of arguements
-NewInt<bitsize>::NewInt(__uint128_t input, ...) {
+BigInt<bitsize>::BigInt(__uint128_t input, ...) {
     // uint128_t input to 2 uint64_t integers
 	// constant mask values
     static constexpr const __uint128_t bottom_mask = (__uint128_t{1} << 64) - 1; // 0x0000000000000000ffffffffffffffffU
@@ -57,7 +57,7 @@ NewInt<bitsize>::NewInt(__uint128_t input, ...) {
 }
 
 template<uint16_t bitsize>
-NewInt<bitsize>::NewInt(uint64_t *input, uint16_t len) // input order has to be: input[0] = most left 64-bit
+BigInt<bitsize>::BigInt(uint64_t *input, uint16_t len) // input order has to be: input[0] = most left 64-bit
 {
     const uint16_t pad_count = op_size-len;
 
@@ -67,6 +67,14 @@ NewInt<bitsize>::NewInt(uint64_t *input, uint16_t len) // input order has to be:
     // add input to operator array
     for(uint16_t i=op_size-1;i>=pad_count;i--) op[i] = input[op_size-i-1];
 	op_nonleading_i = pad_count;
+}
+
+template<uint16_t bitsize>
+BigInt<bitsize> BigInt<bitsize>::operator=(const BigInt &num)
+{
+	// assign non-leading-zero elements of the operator array
+	for(uint16_t i=0;i<num.op_size;i++) op[i] = num.op[i];
+	for(uint16_t i=num.op_size;i<op_size;i++) op[i] = num.op[i]; // op_size is bigger than num.op_size, pad op
 }
 
 int main()

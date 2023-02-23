@@ -48,6 +48,8 @@ class BigInt {
 		BigInt operator*=(const BigInt &num);
 		BigInt operator/(const BigInt &num);
 		BigInt operator/=(const BigInt &num);
+		BigInt operator++();
+		BigInt operator--();
 
 		// bitwise operators
 		BigInt operator~() const;
@@ -144,18 +146,26 @@ class BigInt {
  
 // output stream operator
 template<size_t bitsize>
-std::ostream& operator<<(std::ostream& out, BigInt<bitsize> toprint)
+std::ostream& operator<<(std::ostream& cout, BigInt<bitsize> &toprint)
 {
+	bool pad_stopped = 0; // if pad stopped, then print the rest, including zero values
 	for(uint16_t i=0;i<toprint.op_size;i++) {
-			if(toprint.op[i])
-			out << toprint.op[i];
+			if(toprint.op[i] != 0x0000000000000000ULL) pad_stopped=1;
+			if(pad_stopped)
+				cout << std::setfill('0') << std::setw(20) << toprint.op[i]; // pad count: 2^64-1=20 base 10 digits
 	}
-	return out;
+	return cout;
 }
  
 // input stream operator
 template<size_t bitsize>
-std::istream& operator>>(std::istream& out, BigInt<bitsize> toprint);
+std::istream& operator>>(std::istream& cin, BigInt<bitsize> &input)
+{
+	std::string num;
+	cin >> num;
+	input(num);
+	return cin;
+}
 
 // declare class uint256
 class uint256_t : public BigInt<256>

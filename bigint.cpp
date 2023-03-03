@@ -9,30 +9,13 @@
 template<uint16_t bitsize>
 BigInt<bitsize>::BigInt(std::string input)
 {
-    bool valid_input = input_valid();
-    const uint16_t len = input.length();
-    if (valid_input) {
-        // convert hex input to op elements
-        const uint8_t ind = len%16;
-        const uint16_t multiple16_count = (len-ind)/16;
-        uint64_t *tmp = new uint64_t[multiple16_count];
-        for(uint16_t i=0;i<multiple16_count;i++)
-            tmp[i] = static_cast<uint64_t>(std::stoull(input.substr(i*16+ind,16)));
-		if(ind!=0) {
-			op_nonleading_i =op_size-multiple16_count+1;
-        	op[multiple16_count] = static_cast<uint64_t>(std::stoull(input.substr(0,ind)));
-        	for(uint64_t i=multiple16_count;i>=0;i++) op[op_size-i-2] = tmp[i];
-		} else {
-			op_nonleading_i = op_size-multiple16_count; // if length is a multiple of 16
-        	for(uint64_t i=multiple16_count;i>=0;i++) op[op_size-i-1] = tmp[i];
-		}
-		// pad the operator array
-		for(uint16_t i=0;i<op_nonleading_i-1;i++) op[i] = 0x0000000000000000ULL;
-        delete[] tmp;
-        // get the last smaller-than-16-byte end of input
-    } else {
-        throw wrong_type_error("input has to be hexadecimal");
-    }
+	strtobigint(input);
+}
+
+template<uint16_t bitsize>
+BigInt<bitsize>::BigInt(const char* input)
+{
+	strtobigint(std::string(input)); // to avoid annoying C++ conversion error
 }
 
 // numerical input. If number is 256-bit, input = left 128-bit, right 128-bit
@@ -69,16 +52,37 @@ BigInt<bitsize>::BigInt(uint64_t *input, uint16_t len) // input order has to be:
 	op_nonleading_i = pad_count;
 }
 
+//#pragma GCC diagnostic ignored "-Wtype-limits"
+//template<uint16_t bitsize>
+//BigInt<bitsize> BigInt<bitsize>::operator=(const BigInt &num)
+//{
+//	// assign non-leading-zero elements of the operator array
+//	if(num.op_size <= op_size) {
+//		for(uint16_t i=0;i<num.op_size;i++) op[i] = num.op[i];
+//		for(uint16_t i=num.op_size;i<op_size;i++) op[i] = num.op[i]; // op_size is bigger than num.op_size, pad op
+//	} else {
+//		for(uint16_t i=num.op_size;i>=0;i++) op[i] = num.op[i];
+//		for(uint16_t i=num.op_size;i<op_size;i++) op[i] = num.op[i];
+//	}
+//	return *this;
+//}
+//#pragma GCC diagnostic pop
+
 template<uint16_t bitsize>
-BigInt<bitsize> BigInt<bitsize>::operator=(const BigInt &num)
+BigInt<bitsize> BigInt<bitsize>::operator=(const std::string &num)
 {
-	// assign non-leading-zero elements of the operator array
-	for(uint16_t i=0;i<num.op_size;i++) op[i] = num.op[i];
-	for(uint16_t i=num.op_size;i<op_size;i++) op[i] = num.op[i]; // op_size is bigger than num.op_size, pad op
+	delete this; // object suicide
+	return BigInt<bitsize>(num); // reconstruct as new object
 }
 
 int main()
 {
+	uint256_t num="256";
+	uint256_t num2 = std::string("256");
+	// constexpr uint256_t num3 = BigInt<256><1>(256);
+	std::cout << "num:" << num;
+	std::cout << "\nnum2: " << num2;
+	// std::cout << "\nnum3: " << num3;
 	return 0;
 }
 

@@ -7,7 +7,8 @@
 #include <exception>
 
 class wrong_type_error : public std::runtime_error {
-	explicit wrong_type_error(const std::string& str) : std::runtime_error(str) {}
+	public:
+		explicit wrong_type_error(const std::string& str) : std::runtime_error(str) {}
 };
 
 // custom-size integer class
@@ -21,6 +22,7 @@ class BigInt {
 		uint16_t op_nonleading_i; // index of op when leading zeros end
 	public:
 		const constexpr static uint16_t size = bitsize;
+		BigInt(const char *input);
 		BigInt(std::string input);
 
 		// numerical input. If number is 256-bit, input = left 128-bit, right 128-bit
@@ -33,11 +35,9 @@ class BigInt {
 		// decleration
 		constexpr BigInt() = default;
 
-		// destructors
-		~BigInt();
-
 		// assign uint256 to another uint256
-		BigInt operator=(const BigInt &num);
+		//BigInt operator=(const BigInt &num);
+		BigInt operator=(const std::string &num);
 
 		// arithmetic operations
 		BigInt operator+(const BigInt &num);
@@ -50,6 +50,8 @@ class BigInt {
 		BigInt operator/=(const BigInt &num);
 		BigInt operator++();
 		BigInt operator--();
+		bool operator[](const uint32_t &index) const; // access specific bit of the number
+		uint64_t operator[](const uint16_t &index) const; // access specific 64-bit op index
 
 		// bitwise operators
 		BigInt operator~() const;
@@ -65,15 +67,17 @@ class BigInt {
 		BigInt operator|=(const BigInt &num);
 
 		// boolean operators
-		BigInt operator&&(const BigInt &num);
-		BigInt operator||(const BigInt &num);
-		BigInt operator==(const BigInt &num);
-		BigInt operator!();
-		BigInt operator!=(const BigInt &num);
-		BigInt operator<(const BigInt &num);
-		BigInt operator<=(const BigInt &num);
-		BigInt operator>(const BigInt &num);
-		BigInt operator>=(const BigInt &num);
+		bool operator&&(const BigInt &num);
+		bool operator||(const BigInt &num);
+		bool operator==(const BigInt &num);
+		bool operator!();
+		bool operator!=(const BigInt &num);
+		bool operator<(const BigInt &num);
+		bool operator<=(const BigInt &num);
+		bool operator>(const BigInt &num);
+		bool operator>=(const BigInt &num);
+
+		template<uint16_t n> friend std::ostream& operator<<(std::ostream& cout, BigInt<n> toprint);
 
 	protected:
 		// return carry on a 64-bit number
@@ -142,11 +146,48 @@ class BigInt {
 				return 1;
 			}
 		}
+
+#pragma GCC diagnostic ignored "-Wtype-limits"
+		void strtobigint(std::string input)
+		{
+   			 bool valid_input = input_valid(input);
+   			 const uint16_t len = input.length();
+   			 if (valid_input) {
+   			     // convert hex input to op elements
+   			     const uint8_t ind = len%16;
+   			     const uint16_t multiple16_count = (len-ind)/16;
+				 uint64_t *tmp;
+				 if(multiple16_count != 0) {
+   			     	tmp = new uint64_t[multiple16_count];
+   			     	for(uint16_t i=0;i<multiple16_count;i++)
+   			     	    tmp[i] = static_cast<uint64_t>(std::stoull(input.substr(i*16+ind,16)));
+   			 		if(ind!=0) { // TODO; make nested of above condition. multiple16_count changes output
+   			 			op_nonleading_i =op_size-multiple16_count+1;
+   			    	 	op[multiple16_count] = static_cast<uint64_t>(std::stoull(input.substr(0,ind)));
+   			    	 	for(uint16_t i=multiple16_count;i>=0;i--) op[op_size-i-2] = tmp[i];
+   			 		} else {
+   			 			op_nonleading_i = op_size-multiple16_count; // if length is a multiple of 16
+   			     		for(uint16_t i=multiple16_count;i>=0;i--) op[op_size-i-1] = tmp[i];
+   			 		}
+				 } else {
+   			     	tmp = new uint64_t[1];
+   			     	tmp[0] = static_cast<uint64_t>(std::stoull(input));
+					op_nonleading_i = 1;
+				 }
+   			 	// pad the operator array
+   			 	for(uint16_t i=0;i<op_nonleading_i-1;i++) op[i] = 0x0000000000000000ULL;
+   			     delete[] tmp;
+   			     // get the last smaller-than-16-byte end of input
+   			 } else {
+   			     throw wrong_type_error("input has to be hexadecimal");
+   			 }
+		}
+#pragma GCC diagnostic pop
 };
  
 // output stream operator
-template<size_t bitsize>
-std::ostream& operator<<(std::ostream& cout, BigInt<bitsize> &toprint)
+template<uint16_t bitsize>
+std::ostream& operator<<(std::ostream& cout, BigInt<bitsize> toprint)
 {
 	bool pad_stopped = 0; // if pad stopped, then print the rest, including zero values
 	for(uint16_t i=0;i<toprint.op_size;i++) {
@@ -154,8 +195,11 @@ std::ostream& operator<<(std::ostream& cout, BigInt<bitsize> &toprint)
 			if(pad_stopped)
 				cout << std::setfill('0') << std::setw(20) << toprint.op[i]; // pad count: 2^64-1=20 base 10 digits
 	}
+	if(!pad_stopped) // if zero
+		cout << "0";
 	return cout;
 }
+ 
  
 // input stream operator
 template<size_t bitsize>
@@ -163,18 +207,23 @@ std::istream& operator>>(std::istream& cin, BigInt<bitsize> &input)
 {
 	std::string num;
 	cin >> num;
-	input(num);
+	input = num;
 	return cin;
 }
 
-// declare class uint256
-class uint256_t : public BigInt<256>
-{
-	public:
-		uint256_t(std::string num); // num: uint256 number as base 10 string
-		inline uint256_t(uint64_t *num); // num: uint256 number as array
-		template<size_t count> inline uint256_t(__uint128_t num, ...); // numerical uint128_t input
-		inline constexpr uint256_t(); // no input declaration (num=0)
-};
+using uint192_t = BigInt<192>;
+using uint256_t = BigInt<256>;
+using uint384_t = BigInt<384>;
+using uint512_t = BigInt<512>;
+
+//// declare class uint256
+//class uint256_t : public BigInt<256>
+//{
+//	public:
+//		uint256_t(std::string num); // num: uint256 number as base 10 string
+//		inline uint256_t(uint64_t *num); // num: uint256 number as array
+//		template<size_t count> inline uint256_t(__uint128_t num, ...); // numerical uint128_t input
+//		inline constexpr uint256_t(); // no input declaration (num=0)
+//};
 
 #endif /* BIGINT_H */

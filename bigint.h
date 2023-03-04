@@ -161,21 +161,22 @@ class BigInt {
    			     	tmp = new uint64_t[multiple16_count];
    			     	for(uint16_t i=0;i<multiple16_count;i++)
    			     	    tmp[i] = static_cast<uint64_t>(std::stoull(input.substr(i*16+ind,16)));
-   			 		if(ind!=0) { // TODO; make nested of above condition. multiple16_count changes output
-   			 			op_nonleading_i =op_size-multiple16_count+1;
+   			 		if(ind!=0) {
+   			 			op_nonleading_i = op_size-multiple16_count+1;
    			    	 	op[multiple16_count] = static_cast<uint64_t>(std::stoull(input.substr(0,ind)));
    			    	 	for(uint16_t i=multiple16_count;i>=0;i--) op[op_size-i-2] = tmp[i];
    			 		} else {
    			 			op_nonleading_i = op_size-multiple16_count; // if length is a multiple of 16
    			     		for(uint16_t i=multiple16_count;i>=0;i--) op[op_size-i-1] = tmp[i];
    			 		}
-				 } else {
+				 } else { // length < 16
    			     	tmp = new uint64_t[1];
    			     	tmp[0] = static_cast<uint64_t>(std::stoull(input));
-					op_nonleading_i = 1;
+   			 		op_nonleading_i = op_size-1;
+					op[op_nonleading_i] = *tmp;
 				 }
    			 	// pad the operator array
-   			 	for(uint16_t i=0;i<op_nonleading_i-1;i++) op[i] = 0x0000000000000000ULL;
+   			 	for(uint16_t i=0;i<op_nonleading_i;i++) op[i] = 0x0000000000000000ULL;
    			     delete[] tmp;
    			     // get the last smaller-than-16-byte end of input
    			 } else {
@@ -190,10 +191,16 @@ template<uint16_t bitsize>
 std::ostream& operator<<(std::ostream& cout, BigInt<bitsize> toprint)
 {
 	bool pad_stopped = 0; // if pad stopped, then print the rest, including zero values
+	bool last_num = 0;
 	for(uint16_t i=0;i<toprint.op_size;i++) {
 			if(toprint.op[i] != 0x0000000000000000ULL) pad_stopped=1;
-			if(pad_stopped)
-				cout << std::setfill('0') << std::setw(20) << toprint.op[i]; // pad count: 2^64-1=20 base 10 digits
+			if(pad_stopped) {
+				if(last_num)
+					cout << std::setfill('0') << std::setw(20) << toprint.op[i]; // pad count: 2^64-1=20 base 10 digits
+				else
+					cout << toprint.op[i]; // no padding
+				last_num = 1; // if first print, don't have padding
+			}
 	}
 	if(!pad_stopped) // if zero
 		cout << "0";

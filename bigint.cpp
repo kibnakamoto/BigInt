@@ -10,14 +10,14 @@ template<uint16_t bitsize>
 template<char base> // type of input (int = base 10, hex = base 16)
 BigInt<bitsize>::BigInt(std::string input)
 {
-	strtobigint(input);
+	strtobigint<base>(input);
 }
 
 template<uint16_t bitsize>
 template<char base> // type of input (int = base 10, hex = base 16)
 BigInt<bitsize>::BigInt(const char* input)
 {
-	strtobigint(std::string(input)); // to avoid annoying C++ conversion error
+	strtobigint<base>(std::string(input)); // to avoid annoying C++ conversion error
 }
 
 // numerical input. If number is 256-bit, input = left 128-bit, right 128-bit

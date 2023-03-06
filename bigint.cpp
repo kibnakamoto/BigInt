@@ -7,12 +7,14 @@
 #include "bigint.h"
 
 template<uint16_t bitsize>
+template<char base> // type of input (int = base 10, hex = base 16)
 BigInt<bitsize>::BigInt(std::string input)
 {
 	strtobigint(input);
 }
 
 template<uint16_t bitsize>
+template<char base> // type of input (int = base 10, hex = base 16)
 BigInt<bitsize>::BigInt(const char* input)
 {
 	strtobigint(std::string(input)); // to avoid annoying C++ conversion error
@@ -20,7 +22,7 @@ BigInt<bitsize>::BigInt(const char* input)
 
 // numerical input. If number is 256-bit, input = left 128-bit, right 128-bit
 template<uint16_t bitsize> 
-template<size_t count> // number of arguements
+template<size_t count> // number of arguments
 BigInt<bitsize>::BigInt(__uint128_t input, ...) {
     // uint128_t input to 2 uint64_t integers
 	// constant mask values
@@ -28,7 +30,8 @@ BigInt<bitsize>::BigInt(__uint128_t input, ...) {
     static constexpr const __uint128_t top_mask = ~bottom_mask;                  // 0xffffffffffffffff0000000000000000U
 
 	// pad the operator array
-	op_nonleading_i = op_size-(count<<1)-1;
+	static const constexpr uint16_t tmp = op_size-(count<<1)-1;
+	op_nonleading_i = tmp;
 	for(uint16_t i=0;i<op_nonleading_i;i++) op[i] = 0x0000000000000000ULL;
 
 	// add the inputs to the operator array
@@ -77,12 +80,15 @@ BigInt<bitsize> BigInt<bitsize>::operator=(const std::string &num)
 
 int main()
 {
-	uint256_t num="256";
-	uint256_t num2 = std::string("256");
+	// uint256_t num="256";
+	// uint256_t num2 = std::string("256");
+	uint256_t num="2337616833552046603458334740849159417653411302789319245661"; // 192-bit number
+	uint256_t num2 = std::string("2337616833552046603458334740849159417653411302789319245661"); // 192-bit number
 	// constexpr uint256_t num3 = BigInt<256><1>(256);
-	std::cout << "num:" << num;
+	std::cout << "num: " << num;
 	std::cout << "\nnum2: " << num2;
 	// std::cout << "\nnum3: " << num3;
+	std::cout << std::endl;
 	return 0;
 }
 

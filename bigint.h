@@ -178,6 +178,8 @@ class BigInt {
 				}
 			}
    			const uint16_t len = input.length();
+			////////////////////////////////////////////////// ERROR: caused by stoull function because int is probably too large. 20-digit numbers can also be 65-bit, so another solution required.
+			/// possible solution is bitmasking.
 
    			// convert int/hex input to op elements
    			const uint8_t ind = len%part_size;
@@ -185,8 +187,10 @@ class BigInt {
 			uint64_t *tmp;
 			if(multiple16_count != 0) {
    				tmp = new uint64_t[multiple16_count];
-   				for(uint16_t i=0;i<multiple16_count;i++)
-   				    tmp[i] = static_cast<uint64_t>(std::stoull(input.substr(i*part_size+ind,part_size)));
+   				for(uint16_t i=0;i<multiple16_count;i++) {
+					std::stringstream ss(input.substr(i*part_size+ind,part_size));
+					ss >> tmp[i];
+				}
    			   if(ind!=0) {
    			   	op_nonleading_i = op_size-multiple16_count+1;
    			    	op[multiple16_count] = static_cast<uint64_t>(std::stoull(input.substr(0,ind)));

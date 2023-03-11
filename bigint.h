@@ -1,30 +1,30 @@
 #ifndef BIGINT_H
 
-#include <stdint.h>
+#include <cstdint>
 #include <string>
 #include <iomanip>
 #include <sstream>
 #include <exception>
 
 class wrong_type_error : public std::runtime_error {
-	public:
-		explicit wrong_type_error(const std::string& str) : std::runtime_error(str) {}
+	public: explicit wrong_type_error(const std::string &str) : std::runtime_error(str) {}
 };
 
 // custom-size integer class
 template<uint16_t bitsize>
 class BigInt {
 	protected:
-
 		// operator array
 		constexpr const static uint16_t op_size = bitsize%64==0 ? bitsize/64 : bitsize/64+1;
 		uint64_t op[op_size]; // when iterating, start from end to start
 		uint16_t op_nonleading_i; // index of op when leading zeros end
+
+		constexpr static const uint8_t base10_bitlens[10] = {1, 1, 2, 2, 3, 3, 3, 3, 4, 4}; // bitlen of base 10 numbers
 	public:
 		const constexpr static uint16_t size = bitsize;
-		template<char base=0> // type of input (int = base 10, hex = base 16)
+		template<uint8_t base=0> // type of input (int = base 10, hex = base 16)
 		BigInt(const char *input);
-		template<char base=0> // type of input (int = base 10, hex = base 16)
+		template<uint8_t base=0> // type of input (int = base 10, hex = base 16)
 		BigInt(std::string input);
 
 		// numerical input. If number is 256-bit, input = left 128-bit, right 128-bit
@@ -89,7 +89,7 @@ class BigInt {
 		}
 
 		// check if string is base 10 integer
-		bool check_num(std::string num)
+		constexpr bool check_num(std::string num)
 		{
 			for(uint8_t ch : num) {
 				if(not isdigit(ch)) return 0;
@@ -136,7 +136,7 @@ class BigInt {
 		}
 
 		// check if input is base16
-		bool input_hex(std::string &input)
+		constexpr bool input_hex(std::string &input)
 		{
 			// check if input is hex
 			bool _is_hex = rm_trailhex(input); // remove trailing character if it exists
@@ -152,16 +152,74 @@ class BigInt {
 			}
 		}
 
+		// get the bit-length of a base 10 number
+		template<uint8_t base=10>
+		constexpr uint32_t get_bitlen(std::string num)
+		{
+			uint32_t len = 0;
+			if constexpr(base==10) {
+				for(uint8_t c : num) {
+					len += base10_bitlens[c];
+				}
+			} else if constexpr(base==16) len = num.length()*4;
+			else if constexpr(base==8) len = num.length()*3;
+			return len;
+		}
+
+		template<uint8_t base=0> // type of input (int = base 10, hex = base 16)
+		constexpr void strtobigint(std::string input)
+		{
+			// TODO: check if input length is in range of operator array length, if it's not generate compile time warning
+			constexpr const bool base10 = base==10;
+			constexpr const bool base16 = base==16;
+   			const uint16_t len = input.length();
+			if (get_bitlen(input) > bitsize) throw std::overflow_error("integer is too large for its type");
+
+			if constexpr(base10 or base16) {
+				if constexpr(base10) {
+					uint64_t tmp = 0;
+					__uint128_t tmp_op;
+					uint16_t index = op_size;
+					for(uint16_t i=len-1;i!=UINT16_MAX;i--) {
+						tmp_op = tmp;
+						uint8_t num = static_cast<uint8_t>(input[i]);
+						tmp_op <<= base10_bitlens[num]; // left-shift by the bitlen of base 10 number
+						tmp_op |= num;
+						if(tmp_op > UINT64_MAX) {
+							op[index] = tmp;
+							index--;
+							tmp = 0;
+							tmp_op = 0;
+						} else {
+							tmp = tmp_op;
+						}
+					}
+				} else { // base 16
+					
+				}
+			} else {
+				const bool int_input = check_num(input);
+				if(int_input) {
+						
+				} else {
+   					bool hex_input = input_hex(input);
+					if(hex_input);
+					else throw wrong_type_error("input has to be int or hex");
+				}
+			}
+		}
+		
+
 #pragma GCC diagnostic ignored "-Wtype-limits"
 		template<char base=0> // type of input (int = base 10, hex = base 16)
-		void strtobigint(std::string input)
+		void strtobigint_(std::string input)
 		{
 			unsigned char part_size;
 			constexpr const bool base10 = base==10;
 			constexpr const bool base16 = base==16;
 			if constexpr(base10 or base16) {
 				if constexpr(base10) {
-					part_size=20;
+					part_size=18;
 				} else {
 					part_size=16;
 				}
@@ -169,7 +227,7 @@ class BigInt {
 				const bool int_input = check_num(input);
 				if(int_input) {
 					// if base 10, part-size = len(str(2**64-1))
-					part_size=20;
+					part_size=18;
 				} else {
    					bool hex_input = input_hex(input);
 					// if base 16, part-size = len(hex(2**64-1))
@@ -179,7 +237,7 @@ class BigInt {
 			}
    			const uint16_t len = input.length();
 			////////////////////////////////////////////////// ERROR: caused by stoull function because int is probably too large. 20-digit numbers can also be 65-bit, so another solution required.
-			/// possible solution is bitmasking.
+			/// Check if num is bigger
 
    			// convert int/hex input to op elements
    			const uint8_t ind = len%part_size;
@@ -199,7 +257,7 @@ class BigInt {
    			   	op_nonleading_i = op_size-multiple16_count; // if length is a multiple of part_size
    					for(uint16_t i=multiple16_count;i>0;i--) op[op_size-i-1] = tmp[i];
    			   }
-			} else { // length < 16
+			} else { // length < part_size
    				tmp = new uint64_t[1];
    				tmp[0] = static_cast<uint64_t>(std::stoull(input));
    			   op_nonleading_i = op_size-1;

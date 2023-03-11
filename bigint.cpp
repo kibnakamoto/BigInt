@@ -7,14 +7,14 @@
 #include "bigint.h"
 
 template<uint16_t bitsize>
-template<char base> // type of input (int = base 10, hex = base 16)
+template<uint8_t base> // type of input (int = base 10, hex = base 16)
 BigInt<bitsize>::BigInt(std::string input)
 {
 	strtobigint<base>(input);
 }
 
 template<uint16_t bitsize>
-template<char base> // type of input (int = base 10, hex = base 16)
+template<uint8_t base> // type of input (int = base 10, hex = base 16)
 BigInt<bitsize>::BigInt(const char* input)
 {
 	strtobigint<base>(std::string(input)); // to avoid annoying C++ conversion error

@@ -15,11 +15,11 @@ template<uint16_t bitsize>
 class BigInt {
 	protected:
 		// operator array
-		constexpr const static uint16_t op_size = bitsize%64==0 ? bitsize/64 : bitsize/64+1;
+		const constexpr static uint16_t op_size = bitsize%64==0 ? bitsize/64 : bitsize/64+1;
 		uint64_t op[op_size]; // when iterating, start from end to start
 		uint16_t op_nonleading_i; // index of op when leading zeros end
 
-		constexpr static const uint8_t base10_bitlens[10] = {1, 1, 2, 2, 3, 3, 3, 3, 4, 4}; // bitlen of base 10 numbers
+		const constexpr static uint8_t base10_bitlens[10] = {1, 1, 2, 2, 3, 3, 3, 3, 4, 4}; // bitlen of base 10 numbers
 	public:
 		const constexpr static uint16_t size = bitsize;
 		template<uint8_t base=0> // type of input (int = base 10, hex = base 16)
@@ -83,7 +83,7 @@ class BigInt {
 
 	protected:
 		// return carry on a 64-bit number
-		inline uint64_t carry_size64_add(uint64_t num)
+		constexpr inline uint64_t carry_size64_add(uint64_t num)
 		{
 			return UINT64_MAX - num;
 		}
@@ -98,7 +98,7 @@ class BigInt {
 		}
 
 		// remove 0x if starting with 0x
-		inline bool rm_trailhex(std::string &num)
+		constexpr inline bool rm_trailhex(std::string &num)
 		{
 			if (num.starts_with("0x")) {
 				num = num.erase(0,2);
@@ -108,7 +108,7 @@ class BigInt {
 		} 
 
 		// check if number is hex
-		bool is_hex(std::string num)
+		constexpr bool is_hex(std::string num)
 		{
 			for(uint8_t ch : num) {
 				if(not isxdigit(ch)) return 0;
@@ -118,7 +118,7 @@ class BigInt {
 
 		// number to hex
 		template<typename T>
-		inline std::string hex(T num)
+		inline constexpr std::string hex(T num)
 		{
 			std::stringstream ss;
 			ss << std::hex << num;
@@ -126,7 +126,7 @@ class BigInt {
 		}
 
 		// op to hex
-		std::string hex()
+		constexpr std::string hex()
 		{
 			std::stringstream ss;
 			for(uint16_t i=0;i<op_size;i++) {

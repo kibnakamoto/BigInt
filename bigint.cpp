@@ -10,14 +10,14 @@ template<uint16_t bitsize>
 template<uint8_t base> // type of input (int = base 10, hex = base 16)
 BigInt<bitsize>::BigInt(std::string input)
 {
-	strtobigint<base>(input);
+	strtobigint<base>(input.c_str());
 }
 
 template<uint16_t bitsize>
 template<uint8_t base> // type of input (int = base 10, hex = base 16)
 BigInt<bitsize>::BigInt(const char* input)
 {
-	strtobigint<base>(std::string(input)); // to avoid annoying C++ conversion error
+	strtobigint<base>(input); // to avoid annoying C++ conversion error
 }
 
 // numerical input. If number is 256-bit, input = left 128-bit, right 128-bit
@@ -72,7 +72,7 @@ BigInt<bitsize>::BigInt(uint64_t *input, uint16_t len) // input order has to be:
 //#pragma GCC diagnostic pop
 
 template<uint16_t bitsize>
-BigInt<bitsize> BigInt<bitsize>::operator=(const std::string &num)
+BigInt<bitsize> BigInt<bitsize>::operator=(const char* &num)
 {
 	delete this; // object suicide
 	return BigInt<bitsize>(num); // reconstruct as new object
@@ -82,8 +82,8 @@ int main()
 {
 	// uint256_t num="256";
 	// uint256_t num2 = std::string("256");
-	uint256_t num="2337616833552046603458334740849159417653411302789319245661"; // 192-bit number
-	uint256_t num2 = std::string("2337616833552046603458334740849159417653411302789319245661"); // 192-bit number
+	uint256_t num="2337616833552046603458334740849159417653411302789319245661"; // 232-bit hex
+	uint256_t num2 = std::string("2337616833552046603458334740849159417653411302789319245661"); // 232-bit hex
 	// constexpr uint256_t num3 = BigInt<256><1>(256);
 	std::cout << "num: " << num;
 	std::cout << "\nnum2: " << num2;

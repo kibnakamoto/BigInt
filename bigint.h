@@ -2,12 +2,16 @@
 
 #include <cstdint>
 #include <string>
+#include <cstring>
 #include <iomanip>
 #include <sstream>
 #include <exception>
+#include <bitset>
+
+#include <iostream>
 
 class wrong_type_error : public std::runtime_error {
-	public: explicit wrong_type_error(const std::string &str) : std::runtime_error(str) {}
+	public: explicit wrong_type_error(const char *str) : std::runtime_error(str) {}
 };
 
 // custom-size integer class
@@ -19,13 +23,23 @@ class BigInt {
 		uint64_t op[op_size]; // when iterating, start from end to start
 		uint16_t op_nonleading_i; // index of op when leading zeros end
 
+		// get substring of char* - helper function
+		constexpr std::string get_substring(const char* str, uint16_t start, uint16_t substrsize) {
+			std::string substr = "";
+		
+			// Copy the characters from str[startIndex] to str[endIndex]
+			const uint16_t width = substrsize+start;
+			for (uint16_t i=start;i<width;i++) substr += str[i];
+			return substr;
+		}
+
 		const constexpr static uint8_t base10_bitlens[10] = {1, 1, 2, 2, 3, 3, 3, 3, 4, 4}; // bitlen of base 10 numbers
 	public:
 		const constexpr static uint16_t size = bitsize;
 		template<uint8_t base=0> // type of input (int = base 10, hex = base 16)
-		BigInt(const char *input);
-		template<uint8_t base=0> // type of input (int = base 10, hex = base 16)
 		BigInt(std::string input);
+		template<uint8_t base=0> // type of input (int = base 10, hex = base 16)
+		BigInt(const char *input);
 
 		// numerical input. If number is 256-bit, input = left 128-bit, right 128-bit
 		template<size_t count> // number of arguements
@@ -39,7 +53,7 @@ class BigInt {
 
 		// assign uint256 to another uint256
 		//BigInt operator=(const BigInt &num);
-		BigInt operator=(const std::string &num);
+		BigInt operator=(const char *&num);
 
 		// arithmetic operations
 		BigInt operator+(const BigInt &num);
@@ -88,60 +102,51 @@ class BigInt {
 			return UINT64_MAX - num;
 		}
 
-		// check if string is base 10 integer
-		constexpr bool check_num(std::string num)
-		{
-			for(uint8_t ch : num) {
-				if(not isdigit(ch)) return 0;
-			}
-			return 1;
-		}
-
 		// remove 0x if starting with 0x
-		constexpr inline bool rm_trailhex(std::string &num)
+		constexpr inline bool rm_trailhex(const char *&num)
 		{
-			if (num.starts_with("0x")) {
-				num = num.erase(0,2);
+			std::string_view str(const_cast<char*>(num), 2);
+			if (str == "0x") {
+				num += 2; // delete the 0x
 				return 1;
 			}
 			return 0;
 		} 
 
 		// check if number is hex
-		constexpr bool is_hex(std::string num)
+		constexpr bool is_hex(const char *num, size_t numlen)
 		{
-			for(uint8_t ch : num) {
-				if(not isxdigit(ch)) return 0;
-			}
+			for(size_t i=0;i<numlen;i++)
+				if(not isxdigit(*(num+i))) return 0;
 			return 1;
 		}
 
 		// number to hex
 		template<typename T>
-		inline constexpr std::string hex(T num)
+		inline constexpr const char *hex(T num)
 		{
 			std::stringstream ss;
 			ss << std::hex << num;
-			return ss.str();
+			return ss.str().c_str();
 		}
 
 		// op to hex
-		constexpr std::string hex()
+		constexpr const char *hex()
 		{
 			std::stringstream ss;
 			for(uint16_t i=0;i<op_size;i++) {
 				ss << std::hex << op[i];
 			}
-			return ss.str();
+			return ss.str().c_str();
 		}
 
 		// check if input is base16
-		constexpr bool input_hex(std::string &input)
+		constexpr bool input_hex(const char *&input, size_t input_len)
 		{
 			// check if input is hex
 			bool _is_hex = rm_trailhex(input); // remove trailing character if it exists
 			if(!_is_hex) { // if no hex trail character '0x'
-				_is_hex = is_hex(input); // check if input is hex
+				_is_hex = is_hex(input, input_len); // check if input is hex
 			} else {
 				return 1;
 			}
@@ -152,110 +157,51 @@ class BigInt {
 			}
 		}
 
-		// get the bit-length of a base 10 number
-		template<uint8_t base=10>
-		constexpr uint32_t get_bitlen(std::string num)
+		template<uint8_t base=0> // type of input (int = base 8, hex = base 16)
+		constexpr void strtobigint(const char *input)
 		{
-			uint32_t len = 0;
-			if constexpr(base==10) {
-				for(uint8_t c : num) {
-					len += base10_bitlens[c];
-				}
-			} else if constexpr(base==16) len = num.length()*4;
-			else if constexpr(base==8) len = num.length()*3;
-			return len;
-		}
-
-		template<uint8_t base=0> // type of input (int = base 10, hex = base 16)
-		constexpr void strtobigint(std::string input)
-		{
-			// TODO: check if input length is in range of operator array length, if it's not generate compile time warning
-			constexpr const bool base10 = base==10;
+			constexpr const bool base8 = base==8;
 			constexpr const bool base16 = base==16;
-   			const uint16_t len = input.length();
-			if (get_bitlen(input) > bitsize) throw std::overflow_error("integer is too large for its type");
+   			const size_t len = strlen(input);
+			// TODO: check if input length is in range of operator array length, if it's not generate compile time warning
 
-			if constexpr(base10 or base16) {
-				if constexpr(base10) {
-					uint64_t tmp = 0;
-					__uint128_t tmp_op;
-					uint16_t index = op_size;
-					for(uint16_t i=len-1;i!=UINT16_MAX;i--) {
-						tmp_op = tmp;
-						uint8_t num = static_cast<uint8_t>(input[i]);
-						tmp_op <<= base10_bitlens[num]; // left-shift by the bitlen of base 10 number
-						tmp_op |= num;
-						if(tmp_op > UINT64_MAX) {
-							op[index] = tmp;
-							index--;
-							tmp = 0;
-							tmp_op = 0;
-						} else {
-							tmp = tmp_op;
-						}
-					}
-				} else { // base 16
-					
+			if constexpr(base16 or base8) {
+				if constexpr(base16) {
+					rm_trailhex(input); // remove trailing character if it exists
+					hexoct_to_bigint(input, len, 16);
+				} else { // base 8
+					hexoct_to_bigint(input, len, 8);
 				}
 			} else {
-				const bool int_input = check_num(input);
-				if(int_input) {
-						
-				} else {
-   					bool hex_input = input_hex(input);
-					if(hex_input);
-					else throw wrong_type_error("input has to be int or hex");
-				}
+   				bool hex_input = input_hex(input, len);
+				if(hex_input) hexoct_to_bigint(input, len, 16);
+				else throw wrong_type_error("string or const char* input has to be hex");
 			}
 		}
 		
 
-#pragma GCC diagnostic ignored "-Wtype-limits"
-		template<char base=0> // type of input (int = base 10, hex = base 16)
-		void strtobigint_(std::string input)
+		void hexoct_to_bigint(const char *input, uint16_t len, unsigned char part_size)
 		{
-			unsigned char part_size;
-			constexpr const bool base10 = base==10;
-			constexpr const bool base16 = base==16;
-			if constexpr(base10 or base16) {
-				if constexpr(base10) {
-					part_size=18;
-				} else {
-					part_size=16;
-				}
-			} else {
-				const bool int_input = check_num(input);
-				if(int_input) {
-					// if base 10, part-size = len(str(2**64-1))
-					part_size=18;
-				} else {
-   					bool hex_input = input_hex(input);
-					// if base 16, part-size = len(hex(2**64-1))
-					if(hex_input) part_size=16;
-					else throw wrong_type_error("input has to be int or hex");
-				}
-			}
-   			const uint16_t len = input.length();
-			////////////////////////////////////////////////// ERROR: caused by stoull function because int is probably too large. 20-digit numbers can also be 65-bit, so another solution required.
-			/// Check if num is bigger
-
-   			// convert int/hex input to op elements
+   			// convert oct/hex input to op elements
    			const uint8_t ind = len%part_size;
    			const uint16_t multiple16_count = (len-ind)/part_size;
 			uint64_t *tmp;
 			if(multiple16_count != 0) {
    				tmp = new uint64_t[multiple16_count];
+				// get's the first multiple of part_size values of the integer
    				for(uint16_t i=0;i<multiple16_count;i++) {
-					std::stringstream ss(input.substr(i*part_size+ind,part_size));
+					std::stringstream ss;
+					ss << std::hex << get_substring(input, i*part_size+ind,part_size);
 					ss >> tmp[i];
 				}
-   			   if(ind!=0) {
-   			   	op_nonleading_i = op_size-multiple16_count+1;
-   			    	op[multiple16_count] = static_cast<uint64_t>(std::stoull(input.substr(0,ind)));
-   			    	for(uint16_t i=multiple16_count;i>0;i--) op[op_size-i-2] = tmp[i];
+   			   if(ind!=0) { // if len not a multiple of part_size
+   			   	op_nonleading_i = op_size-multiple16_count-1;
+   			    	op[op_size-multiple16_count-1] = static_cast<uint64_t>(std::stoull(get_substring(input, 0,ind)));
+   			    	for(uint16_t i=multiple16_count;i>0;i--) op[op_size-i] = tmp[i];
+   			    	for(uint16_t i=multiple16_count;i>0;i--) std::cout << i << std::endl;
    			   } else {
    			   	op_nonleading_i = op_size-multiple16_count; // if length is a multiple of part_size
-   					for(uint16_t i=multiple16_count;i>0;i--) op[op_size-i-1] = tmp[i];
+   					for(uint16_t i=multiple16_count;i>0;i--) op[op_size-i+1] = tmp[i];
    			   }
 			} else { // length < part_size
    				tmp = new uint64_t[1];
@@ -266,9 +212,8 @@ class BigInt {
    			// pad the operator array
    			for(uint16_t i=0;i<op_nonleading_i;i++) op[i] = 0x0000000000000000ULL;
    			delete[] tmp;
-			for(uint16_t i=op_size-1;i>op_size-4;i--) std::cout << op[i] << " ";
+			// for(uint16_t i=op_size-1;i>op_size-4;i--) std::cout << op[i] << " ";
 		}
-#pragma GCC diagnostic pop
 };
  
 // output stream operator
@@ -277,15 +222,23 @@ std::ostream& operator<<(std::ostream& cout, BigInt<bitsize> toprint)
 {
 	bool pad_stopped = 0; // if pad stopped, then print the rest, including zero values
 	bool last_num = 0;
+	uint8_t pad_size;
+
+	// initialize the pad sizes based on whether the ostream is dec, hex, oct, bin.
+	std::ios_base::fmtflags fmt = cout.flags();
+	if(fmt & std::ios_base::dec) pad_size = 20;
+	else if(fmt & std::ios_base::hex) pad_size = 16;
+	else if(fmt & std::ios_base::oct) pad_size = 22;
+	else pad_size = 64; // bin
 	for(uint16_t i=0;i<toprint.op_size;i++) {
-			if(toprint.op[i] != 0x0000000000000000ULL) pad_stopped=1;
-			if(pad_stopped) {
-				if(last_num)
-					cout << std::setfill('0') << std::setw(20) << toprint.op[i]; // pad count: 2^64-1=20 base 10 digits
-				else
-					cout << toprint.op[i]; // no padding
-				last_num = 1; // if first print, don't have padding
-			}
+		if(toprint.op[i] != 0x0000000000000000ULL) pad_stopped=1;
+		if(pad_stopped) {
+			if(last_num)
+				cout << std::setfill('0') << std::setw(pad_size) << toprint.op[i]; // pad count: 2^64-1=20 base 16 digits
+			else
+				cout << toprint.op[i]; // no padding
+			last_num = 1; // if not first print, pad
+		}
 	}
 	if(!pad_stopped) // if zero
 		cout << "0";

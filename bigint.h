@@ -193,27 +193,28 @@ class BigInt {
 					std::stringstream ss;
 					ss << std::hex << get_substring(input, i*part_size+ind,part_size);
 					ss >> tmp[i];
-					std::cout << tmp[i] << " ";
 				}
    			   	if(ind!=0) { // if len not a multiple of part_size
    			   		op_nonleading_i = op_size-multiple16_count-1; // includes the final value
-   			   	 	op[op_size-multiple16_count-1] = static_cast<uint64_t>(std::stoull(get_substring(input, 0,ind)));
-   			   	 	for(uint16_t i=multiple16_count;i>0;i--) op[op_size-i] = tmp[i-1];
-   			   	 	//for(uint16_t i=multiple16_count;i>0;i--) std::cout << tmp[i-1] << " ";
+					std::stringstream ss;
+					ss << std::hex << get_substring(input, 0,ind);
+					ss >> op[op_size-multiple16_count-1];
+   			   	 	for(uint16_t i=multiple16_count;i>0;i--) op[op_size-i] = tmp[multiple16_count-i];
    			   	} else {
    			   		op_nonleading_i = op_size-multiple16_count; // if length is a multiple of part_size
-   			   	 	for(uint16_t i=multiple16_count;i>0;i--) op[op_size-i+1] = tmp[i-1];
+   			   	 	for(uint16_t i=multiple16_count;i>0;i--) op[op_size-i+1] = tmp[multiple16_count-i];
    			   	}
 			} else { // length < part_size
    				tmp = new uint64_t[1];
-   				tmp[0] = static_cast<uint64_t>(std::stoull(input));
+				std::stringstream ss;
+				ss << std::hex << input;
+				ss >> *tmp;
    			   op_nonleading_i = op_size-1;
 			   op[op_nonleading_i] = *tmp;
 			}
    			// pad the operator array
    			for(uint16_t i=0;i<op_nonleading_i;i++) op[i] = 0x0000000000000000ULL;
    			delete[] tmp;
-			// for(uint16_t i=op_size-1;i>op_size-4;i--) std::cout << op[i] << " ";
 		}
 };
  
@@ -228,14 +229,14 @@ std::ostream& operator<<(std::ostream& cout, BigInt<bitsize> toprint)
 	// initialize the pad sizes based on whether the ostream is dec, hex, oct, bin.
 	std::ios_base::fmtflags fmt = cout.flags();
 	if(fmt & std::ios_base::dec) pad_size = 20;
-	else if(fmt & std::ios_base::hex) pad_size = 16;
+	else if(fmt & std::ios_base::hex) pad_size = 16; // pad count: 2^64-1=16 base 16 digits
 	else if(fmt & std::ios_base::oct) pad_size = 22;
 	else pad_size = 64; // bin
 	for(uint16_t i=0;i<toprint.op_size;i++) {
 		if(toprint.op[i] != 0x0000000000000000ULL) pad_stopped=1;
 		if(pad_stopped) {
 			if(last_num)
-				cout << std::setfill('0') << std::setw(pad_size) << toprint.op[i]; // pad count: 2^64-1=20 base 16 digits
+				cout << std::setfill('0') << std::setw(pad_size) << toprint.op[i];
 			else
 				cout << toprint.op[i]; // no padding
 			last_num = 1; // if not first print, pad

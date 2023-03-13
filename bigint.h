@@ -32,8 +32,6 @@ class BigInt {
 			for (uint16_t i=start;i<width;i++) substr += str[i];
 			return substr;
 		}
-
-		const constexpr static uint8_t base10_bitlens[10] = {1, 1, 2, 2, 3, 3, 3, 3, 4, 4}; // bitlen of base 10 numbers
 	public:
 		const constexpr static uint16_t size = bitsize;
 		template<uint8_t base=0> // type of input (int = base 10, hex = base 16)
@@ -53,45 +51,48 @@ class BigInt {
 
 		// assign uint256 to another uint256
 		//BigInt operator=(const BigInt &num);
-		BigInt operator=(const char *&num);
+		constexpr BigInt operator=(const char *&num);
 
 		// arithmetic operations
-		BigInt operator+(const BigInt &num);
-		BigInt operator+=(const BigInt &num);
-		BigInt operator-(const BigInt &num);
-		BigInt operator-=(const BigInt &num);
-		BigInt operator*(const BigInt &num);
-		BigInt operator*=(const BigInt &num);
-		BigInt operator/(const BigInt &num);
-		BigInt operator/=(const BigInt &num);
-		BigInt operator++();
-		BigInt operator--();
-		bool operator[](const uint32_t &index) const; // access specific bit of the number
-		uint64_t operator[](const uint16_t &index) const; // access specific 64-bit op index
+		constexpr BigInt operator+(const BigInt &num);
+		constexpr BigInt operator+=(const BigInt &num);
+		constexpr BigInt operator-(const BigInt &num);
+		constexpr BigInt operator-=(const BigInt &num);
+		constexpr BigInt operator*(const BigInt &num);
+		constexpr BigInt operator*=(const BigInt &num);
+		constexpr BigInt operator/(const BigInt &num);
+		constexpr BigInt operator/=(const BigInt &num);
+		constexpr BigInt operator++();
+		constexpr BigInt operator--();
+		constexpr bool operator[](const uint32_t &index) const; // access specific bit of the number
+		constexpr uint64_t operator[](const uint16_t &index) const; // access specific 64-bit op index
 
 		// bitwise operators
-		BigInt operator~() const;
-		BigInt operator&(const BigInt &num);
-		BigInt operator&=(const BigInt &num);
-		BigInt operator^(const BigInt &num);
-		BigInt operator^=(const BigInt &num);
-		BigInt operator>>(const BigInt &num);
-		BigInt operator>>=(const BigInt &num);
-		BigInt operator<<(const BigInt &num);
-		BigInt operator<<=(const BigInt &num);
-		BigInt operator|(const BigInt &num);
-		BigInt operator|=(const BigInt &num);
+		constexpr BigInt operator~() const;
+		constexpr BigInt operator&(const BigInt &num);
+		constexpr BigInt operator&=(const BigInt &num);
+		constexpr BigInt operator^(const BigInt &num);
+		constexpr BigInt operator^=(const BigInt &num);
+		constexpr BigInt operator>>(const BigInt &num);
+		constexpr BigInt operator>>=(const BigInt &num);
+		constexpr BigInt operator<<(const BigInt &num);
+		constexpr BigInt operator<<=(const BigInt &num);
+		constexpr BigInt operator|(const BigInt &num);
+		constexpr BigInt operator|=(const BigInt &num);
 
 		// boolean operators
-		bool operator&&(const BigInt &num);
-		bool operator||(const BigInt &num);
-		bool operator==(const BigInt &num);
-		bool operator!();
-		bool operator!=(const BigInt &num);
-		bool operator<(const BigInt &num);
-		bool operator<=(const BigInt &num);
-		bool operator>(const BigInt &num);
-		bool operator>=(const BigInt &num);
+		constexpr bool operator&&(const BigInt &num);
+		constexpr bool operator||(const BigInt &num);
+		constexpr bool operator==(const BigInt &num);
+		constexpr bool operator!();
+		constexpr bool operator!=(const BigInt &num);
+		constexpr bool operator<(const BigInt &num);
+		constexpr bool operator<=(const BigInt &num);
+		constexpr bool operator>(const BigInt &num);
+		constexpr bool operator>=(const BigInt &num);
+		
+		// delete operator for deleting run-time objects
+		inline void operator delete(void *dat) noexcept;
 
 		template<uint16_t n> friend std::ostream& operator<<(std::ostream& cout, BigInt<n> toprint);
 

@@ -72,7 +72,7 @@ BigInt<bitsize>::BigInt(uint64_t *input, uint16_t len) // input order has to be:
 //#pragma GCC diagnostic pop
 
 template<uint16_t bitsize>
-BigInt<bitsize> BigInt<bitsize>::operator=(const char* &num)
+constexpr BigInt<bitsize> BigInt<bitsize>::operator=(const char* &num)
 {
 	delete this; // object suicide
 	return BigInt<bitsize>(num); // reconstruct as new object

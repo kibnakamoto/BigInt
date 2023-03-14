@@ -92,7 +92,12 @@ class BigInt {
 		constexpr bool operator>=(const BigInt &num);
 		
 		// delete operator for deleting run-time objects
-		inline void operator delete(void *dat) noexcept;
+		inline void operator delete(void *dat);
+
+		// implicit conversion operators
+		inline constexpr operator __uint128_t() const noexcept;
+
+		inline constexpr operator uint64_t*() const noexcept { return op; }
 
 		template<uint16_t n> friend std::ostream& operator<<(std::ostream& cout, BigInt<n> toprint);
 

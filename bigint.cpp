@@ -30,7 +30,7 @@ BigInt<bitsize>::BigInt(__uint128_t input, ...) {
     static constexpr const __uint128_t top_mask = ~bottom_mask;                  // 0xffffffffffffffff0000000000000000U
 
 	// pad the operator array
-	static const constexpr uint16_t tmp = op_size-(count<<1)-1;
+	const constexpr uint16_t tmp = op_size-(count<<1)-1;
 	op_nonleading_i = tmp;
 	for(uint16_t i=0;i<op_nonleading_i;i++) op[i] = 0x0000000000000000ULL;
 
@@ -64,7 +64,7 @@ BigInt<bitsize>::BigInt(uint64_t *input, uint16_t len) // input order has to be:
 //		for(uint16_t i=0;i<num.op_size;i++) op[i] = num.op[i];
 //		for(uint16_t i=num.op_size;i<op_size;i++) op[i] = num.op[i]; // op_size is bigger than num.op_size, pad op
 //	} else {
-//		for(uint16_t i=num.op_size;i>=0;i++) op[i] = num.op[i];
+//		for(uint16_t i=num.op_size;i>0;i++) op[i] = num.op[i];
 //		for(uint16_t i=num.op_size;i<op_size;i++) op[i] = num.op[i];
 //	}
 //	return *this;
@@ -76,6 +76,13 @@ constexpr BigInt<bitsize> BigInt<bitsize>::operator=(const char* &num)
 {
 	delete this; // object suicide
 	return BigInt<bitsize>(num); // reconstruct as new object
+}
+
+template<uint16_t bitsize>
+[[nodiscard("discarded BigInt after operator+")]]
+constexpr BigInt<bitsize> BigInt<bitsize>::operator+(const BigInt &num)
+{
+	
 }
 
 int main()

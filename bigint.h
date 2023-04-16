@@ -14,8 +14,11 @@ class wrong_type_error : public std::runtime_error {
 	public: explicit wrong_type_error(const char *str) : std::runtime_error(str) {}
 };
 
+// TODO: define addition and subtraction
+
 // custom-size integer class
 template<uint16_t bitsize>
+// alignas((bitsize%64==0 ? bitsize/64 : bitsize/64+1)<<3)
 class BigInt {
 	protected:
 		// operator array
@@ -24,12 +27,13 @@ class BigInt {
 		uint16_t op_nonleading_i; // index of op when leading zeros end
 
 		// get substring of char* - helper function
-		constexpr std::string get_substring(const char* str, uint16_t start, uint16_t substrsize) {
+		constexpr std::string get_substring(const char* str, uint16_t start, uint16_t substrsize)
+		{
 			std::string substr = "";
 		
 			// Copy the characters from str[startIndex] to str[endIndex]
 			const uint16_t width = substrsize+start;
-			for (uint16_t i=start;i<width;i++) substr += str[i];
+			for(uint16_t i=start;i<width;i++) substr += str[i];
 			return substr;
 		}
 	public:

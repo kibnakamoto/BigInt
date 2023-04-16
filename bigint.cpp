@@ -7,14 +7,14 @@
 #include "bigint.h"
 
 template<uint16_t bitsize>
-template<uint8_t base> // type of input (int = base 10, hex = base 16)
+template<uint8_t base> // type of input (oct = base 8, hex = base 16)
 BigInt<bitsize>::BigInt(std::string input)
 {
 	strtobigint<base>(input.c_str());
 }
 
 template<uint16_t bitsize>
-template<uint8_t base> // type of input (int = base 10, hex = base 16)
+template<uint8_t base> // type of input (oct = base 8, hex = base 16)
 BigInt<bitsize>::BigInt(const char* input)
 {
 	strtobigint<base>(input); // to avoid annoying C++ conversion error
@@ -72,6 +72,7 @@ BigInt<bitsize>::BigInt(uint64_t *input, uint16_t len) // input order has to be:
 //#pragma GCC diagnostic pop
 
 template<uint16_t bitsize>
+[[nodiscard("discarded assignment operator")]]
 constexpr BigInt<bitsize> BigInt<bitsize>::operator=(const char* &num)
 {
 	delete this; // object suicide
@@ -79,10 +80,21 @@ constexpr BigInt<bitsize> BigInt<bitsize>::operator=(const char* &num)
 }
 
 template<uint16_t bitsize>
-[[nodiscard("discarded BigInt after operator+")]]
+[[nodiscard("discarded BigInt operator+")]]
 constexpr BigInt<bitsize> BigInt<bitsize>::operator+(const BigInt &num)
 {
-	
+	uint64_t new_op[op_size];
+	for(uint16_t i=0;i<op_size;i++) {
+		__uint128_t tmp = op[i];
+		tmp += num[i];
+		if(tmp > UINT64_MAX) { // TODO: debug and test
+    		new_op[i] = tmp << 64;
+    		new_op[i+1] = tmp & UINT64_MAX;
+		} else {
+			new_op[i] = tmp;
+		}
+	}
+	return BigInt<bitsize>(new_op, op_size);
 }
 
 int main()
@@ -92,8 +104,8 @@ int main()
 	uint256_t num="2337616833552046603458334740849159417653411302789319245661"; // 232-bit hex
 	uint256_t num2 = std::string("2337616833552046603458334740849159417653411302789319245661"); // 232-bit hex
 	// constexpr uint256_t num3 = BigInt<256><1>(256);
-	std::cout << "num: " << num;
-	std::cout << "\nnum2: " << std::hex << num2;
+	std::cout << "int num: " << num;
+	std::cout << "\nhex num2: " << std::hex << num2;
 	// std::cout << "\nnum3: " << num3;
 	std::cout << std::endl;
 	return 0;

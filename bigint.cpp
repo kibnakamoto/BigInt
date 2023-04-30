@@ -1,4 +1,5 @@
 #ifndef BIGINT_CPP
+#define BIGINT_CPP
 
 #include <iostream>
 #include <string>

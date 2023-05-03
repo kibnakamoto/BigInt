@@ -85,16 +85,38 @@ template<uint16_t bitsize>
 constexpr BigInt<bitsize> BigInt<bitsize>::operator+(const BigInt &num)
 {
 	uint64_t new_op[op_size];
+	std::copy(std::begin(op), std::end(op), std::begin(new_op)); // set to op
+	std::cout << std::hex << std::endl << "old op:\t";
 	for(uint16_t i=0;i<op_size;i++) {
+		std::cout << new_op[i] << " ";
+	}
+	for(uint16_t i=op_size;i --> 0;) {
 		__uint128_t tmp = op[i];
-		tmp += num[i];
-		if(tmp > UINT64_MAX) { // TODO: debug and test
-    		new_op[i] = tmp << 64;
-    		new_op[i+1] = tmp & UINT64_MAX;
+		tmp += num.op[i];
+		if(tmp > UINT64_MAX) {
+    		new_op[i] = tmp & 64; // assign the main value to assign value with no carry (only no carry because of bit-shifting)
+			uint16_t j = 1;
+			while(true) { // if carry exists
+				__uint128_t new_tmp = (tmp >> 64)+new_op[i+j];
+				if(new_tmp > UINT64_MAX) {
+    				new_op[i+j] = new_tmp & UINT64_MAX;
+				} else {
+					new_op[i+j] = new_tmp;
+					break;
+				}
+				j++;
+			}
 		} else {
 			new_op[i] = tmp;
 		}
 	}
+	std::cout << std::endl << "new_op:\t";
+	for(uint16_t i=0;i<op_size;i++) {
+		std::cout << new_op[i] << "";
+	}
+	std::cout << std::endl << "answer: " << "466ec2d066aa408cc068b0668e810922b282eca6822604f1263248acc2";
+
+	std::cout << std::endl << "returned" << std::endl;
 	return BigInt<bitsize>(new_op, op_size);
 }
 
@@ -104,6 +126,7 @@ int main()
 	// uint256_t num2 = std::string("256");
 	uint256_t num="2337616833552046603458334740849159417653411302789319245661"; // 232-bit hex
 	uint256_t num2 = std::string("2337616833552046603458334740849159417653411302789319245661"); // 232-bit hex
+	std::cout << num + num2;
 	// constexpr uint256_t num3 = BigInt<256><1>(256);
 	std::cout << "int num: " << num;
 	std::cout << "\nhex num2: " << std::hex << num2;

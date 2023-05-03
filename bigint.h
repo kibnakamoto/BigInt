@@ -168,6 +168,7 @@ class BigInt {
 			}
 		}
 
+		// convert string to bigint
 		template<uint8_t base=0> // type of input (int = base 8, hex = base 16)
 		constexpr void strtobigint(const char *input)
 		{
@@ -190,7 +191,7 @@ class BigInt {
 			}
 		}
 		
-
+		// helper algorithm to convert hex or oct values to big integer
 		constexpr void hexoct_to_bigint(const char *input, uint16_t len, const unsigned char part_size)
 		{
    			// convert oct/hex input to op elements

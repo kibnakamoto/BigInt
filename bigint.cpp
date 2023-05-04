@@ -73,12 +73,78 @@ BigInt<bitsize>::BigInt(uint64_t *input, uint16_t len) // input order has to be:
 //#pragma GCC diagnostic pop
 
 template<uint16_t bitsize>
-[[nodiscard("discarded assignment operator")]]
+[[nodiscard("discarded BigInt assignment operator")]]
 constexpr BigInt<bitsize> BigInt<bitsize>::operator=(const char* &num)
 {
 	delete this; // object suicide
 	return BigInt<bitsize>(num); // reconstruct as new object
 }
+
+template<uint16_t bitsize>
+[[nodiscard("discarded BigInt boolean and operator&&")]]
+constexpr bool BigInt<bitsize>::operator&&(const BigInt &num)
+{
+	return 0;
+}
+
+template<uint16_t bitsize>
+[[nodiscard("discarded BigInt boolean or operator||")]]
+constexpr bool BigInt<bitsize>::operator||(const BigInt &num)
+{
+	return 0;
+}
+
+template<uint16_t bitsize>
+[[nodiscard("discarded BigInt boolean equal to operator==")]]
+constexpr bool BigInt<bitsize>::operator==(const BigInt &num)
+{
+	return 0;
+}
+
+// check if initialized and not zero
+template<uint16_t bitsize>
+[[nodiscard("discarded BigInt boolean not operator!")]]
+constexpr bool BigInt<bitsize>::operator!()
+{
+	return 0;
+}
+
+// boolean operator, check if not equal to
+template<uint16_t bitsize>
+[[nodiscard("discarded BigInt boolean not equal to operator!=")]]
+constexpr bool BigInt<bitsize>::operator!=(const BigInt &num)
+{
+	return 0;
+}
+
+template<uint16_t bitsize>
+[[nodiscard("discarded BigInt boolean less than operator<")]]
+constexpr bool BigInt<bitsize>::operator<(const BigInt &num)
+{
+	return 0;
+}
+
+template<uint16_t bitsize>
+[[nodiscard("discarded BigInt less or equal to operator<=")]]
+constexpr bool BigInt<bitsize>::operator<=(const BigInt &num)
+{
+	return 0;
+}
+
+template<uint16_t bitsize>
+[[nodiscard("discarded BigInt greater operator>")]]
+constexpr bool BigInt<bitsize>::operator>(const BigInt &num)
+{
+	return 0;
+}
+
+template<uint16_t bitsize>
+[[nodiscard("discarded BigInt greater or equal to operator>=")]]
+constexpr bool BigInt<bitsize>::operator>=(const BigInt &num)
+{
+	return 0;
+}
+
 
 template<uint16_t bitsize>
 [[nodiscard("discarded BigInt operator+")]]
@@ -118,6 +184,16 @@ constexpr BigInt<bitsize> BigInt<bitsize>::operator+(const BigInt &num)
 
 	std::cout << std::endl << "returned" << std::endl;
 	return BigInt<bitsize>(new_op, op_size);
+}
+
+template<uint16_t bitsize>
+[[nodiscard("discarded BigInt operator+")]]
+constexpr BigInt<bitsize> BigInt<bitsize>::operator-(const BigInt &num)
+{
+	// 0x7fffffffffffffffffffffffffffffffU // largest signed 128-bit num
+    static constexpr const __int128_t int128_max = ((__int128_t)0x7fffffffffffffffU<<64)|0xffffffffffffffffU;
+	
+	// first check if number is bigger
 }
 
 int main()

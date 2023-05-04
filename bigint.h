@@ -96,8 +96,9 @@ class BigInt {
 		constexpr bool operator>(const BigInt &num);
 		constexpr bool operator>=(const BigInt &num);
 		
-		// delete operator for deleting run-time objects
-		inline void operator delete(void *dat);
+		// delete operators for deleting run-time objects
+		inline void operator delete(void *dat); // delete object itself
+		inline void operator delete[](void *dat); // destroy all run-time data in object
 
 		// implicit conversion operators
 		inline constexpr operator __uint128_t() const noexcept;

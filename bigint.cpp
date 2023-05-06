@@ -47,6 +47,7 @@ BigInt<bitsize>::BigInt(__uint128_t input, ...) {
 template<uint16_t bitsize>
 BigInt<bitsize>::BigInt(uint64_t *input, uint16_t len) // input order has to be: input[0] = most left 64-bit
 {
+	// calculate pad count
 	uint16_t pad_count;
 	if(len > op_size) { // if bigger integer type, and input array has non-zero number at the height of op
 		bool found = false;
@@ -75,7 +76,7 @@ BigInt<bitsize>::BigInt(uint64_t *input, uint16_t len) // input order has to be:
     for(uint16_t i=0;i<pad_count;i++) op[i] = 0x0000000000000000ULL;
 
     // add input to operator array
-    for(uint16_t i=op_size;i --> pad_count;) op[i] = input[op_size-i-1];
+    for(uint16_t i=op_size;i --> pad_count;) op[i] = input[i];
 	op_nonleading_i = pad_count;
 }
 
@@ -201,6 +202,8 @@ constexpr BigInt<bitsize> BigInt<bitsize>::operator+(const BigInt &num)
 			new_op[i] = tmp;
 		}
 	}
+
+	// testing
 	std::cout << std::endl << "new_op:\t";
 	for(uint16_t i=0;i<op_size;i++) {
 		std::cout << new_op[i] << "";
@@ -227,11 +230,11 @@ int main()
 	// uint256_t num2 = std::string("256");
 	uint256_t num="2337616833552046603458334740849159417653411302789319245661"; // 232-bit hex
 	uint256_t num2 = std::string("2337616833552046603458334740849159417653411302789319245661"); // 232-bit hex
-	std::cout << num + num2;
 	// constexpr uint256_t num3 = BigInt<256><1>(256);
 	std::cout << "int num: " << num;
 	std::cout << "\nhex num2: " << std::hex << num2;
-	// std::cout << "\nnum3: " << num3;
+	auto num3 = num + num2;
+	std::cout << "\nnum+num2: " << std::hex << num3;
 	std::cout << std::endl;
 	return 0;
 }

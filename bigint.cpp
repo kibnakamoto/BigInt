@@ -38,23 +38,48 @@ BigInt<bitsize>::BigInt(__uint128_t input, ...) {
 	// add the inputs to the operator array
     for(size_t i=0;i<count;i++) {
         __uint128_t num = *((__uint128_t*)&input + i);
-        op[op_size-i-1] = num&bottom_mask;
-        op[op_size-i-2] = (num&top_mask) >> 64;
+        op[op_size-i*2-1] = num&bottom_mask;
+        op[op_size-i*2-2] = (num&top_mask) >> 64;
     }
 }
 
+// assignment to operator array of known length
 template<uint16_t bitsize>
 BigInt<bitsize>::BigInt(uint64_t *input, uint16_t len) // input order has to be: input[0] = most left 64-bit
 {
-    const uint16_t pad_count = op_size-len;
+	uint16_t pad_count;
+	if(len > op_size) { // if bigger integer type, and input array has non-zero number at the height of op
+		bool found = false;
+		for(uint16_t i=0;i<=op_size;i++) { // iterate to op_size because input array order is backwards
+			if(input[i] != 0)
+				found = true;
+		}
+		if(found) { // maybe input[op_size] = 0 but input[op_size+1] !=0, therefore use the found defined above
+			throw int_too_large_error(("given integer is too large for the defined BigInt<" + std::to_string(bitsize) +
+									  "> which is not enough to hold a value of BigInt<" + std::to_string(len*64) + ">").c_str());
+		} else {
+			uint16_t nonzeroi; // index of non-zero input element
+			for(uint16_t i=op_size+1;i<len;i++) { // basically continuation of previous loop
+				if(input[i] != 0) {
+					nonzeroi=i;
+					break;
+				}
+			}
+    		pad_count = nonzeroi;
+		}
+	} else {
+		pad_count = len-op_size;
 
+	}
     // pad the operator array
     for(uint16_t i=0;i<pad_count;i++) op[i] = 0x0000000000000000ULL;
 
     // add input to operator array
-    for(uint16_t i=op_size-1;i>=pad_count;i--) op[i] = input[op_size-i-1];
+    for(uint16_t i=op_size;i --> pad_count;) op[i] = input[op_size-i-1];
 	op_nonleading_i = pad_count;
 }
+
+// TODO: recreate the above function with len as template parameter and as constexpr function
 
 //#pragma GCC diagnostic ignored "-Wtype-limits"
 //template<uint16_t bitsize>

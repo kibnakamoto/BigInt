@@ -11,11 +11,15 @@
 
 #include <iostream>
 
+// raise when wrong type
 class wrong_type_error : public std::runtime_error {
 	public: explicit wrong_type_error(const char *str) : std::runtime_error(str) {}
 };
 
-// TODO: define addition and subtraction
+// raise when integer too large
+class int_too_large_error : public std::runtime_error {
+	public: explicit int_too_large_error(const char *str) : std::runtime_error(str) {}
+};
 
 // custom-size integer class
 template<uint16_t bitsize>

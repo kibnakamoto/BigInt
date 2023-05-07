@@ -234,7 +234,7 @@ int main()
 	std::cout << "int num: " << num;
 	std::cout << "\nhex num2: " << std::hex << num2;
 	auto num3 = num + num2;
-	std::cout << "\nnum+num2: " << std::hex << num3;
+	std::cout << "\nnum+num2: " << num3;
 	std::cout << std::endl;
 	return 0;
 }

@@ -3,8 +3,12 @@
 #include <iostream>
 #include <string>
 #include <stdint.h>
+#include<random>
 
 #include "bigint.h"
+
+// TODO: set testing with different bitsizes, e.g. one is 256 while other is 512. test operators using this
+// TODO: add looping with different values to testing
 
 template<uint16_t bitsize>
 class Test : public BigInt<bitsize>
@@ -14,7 +18,29 @@ class Test : public BigInt<bitsize>
 		{
 			// convert operator array to string
 			std::string str = "";
-			for(uint16_t i=0;i<op_size;i++) str += std::to_string(__op[i]);
+			for(uint16_t i=0;i<BigInt<bitsize>::op_size;i++) str += std::to_string(__op[i]);
+			return str;
+		}
+
+		std::string rand_str(uint16_t _bitsize) {
+		    // random byte using Mersenne Twister, generate random bitset length, then generate a random string of that random length
+    		std::random_device randDev;
+    		std::mt19937 generator(randDev() ^ time(NULL));
+    		std::uniform_int_distribution<uint16_t> distr;
+    		std::uniform_int_distribution<bool> distr2;
+			uint16_t length = distr(generator);
+			bool bitset[length];
+			uint16_t hexlen = length%4==0 ? length/4 : length/4+1;
+			uint8_t hexset[hexlen];
+			for(uint16_t i=0;i<length;i++) {
+				if(i%4) hexset[i] = 0x0000;
+				bitset[i] = distr2(generator);
+				hexset[i/4] <<= 1;
+				hexset[i/4] |= bitset[i];
+			}
+			
+			// convert bitset to numbers
+			std::string str = (char*)hexset;
 			return str;
 		}
 
@@ -22,7 +48,7 @@ class Test : public BigInt<bitsize>
 		std::string _op;
 		Test() {
 			// convert operator array to string
-			_op = optostr(op);
+			_op = optostr(BigInt<bitsize>::op);
 		}
 
 		/////////// TEST STRING AND CHAR ASSIGNMENT OPERATORS (INT, HEX)
@@ -72,11 +98,20 @@ class Test : public BigInt<bitsize>
 		
 		/////////// TEST STRING AND CHAR ASSIGNMENT OPERATORS (INT, HEX)
 		void test_int_assignment() {
-			BigInt<bitsize> num = BigInt<bitsize><1>(256);
+			BigInt<bitsize> num = BigInt<bitsize>(256);
 		}
 		
 		void test_long_int_assignment() {
-			BigInt<bitsize> num = BigInt<bitsize><1>(0xabcde0123456789fffffffffffffffff,0xffffffffffffffffffffffffffff);
+    		static constexpr const __uint128_t num_long_int = ((__uint128_t)0xabcde0123456789fU<<64)|0xffffffffffffffffU;
+    		static constexpr const __uint128_t num_long_int2 = ((__uint128_t)0xffffffffffffffffU<<64)|0xffffffffffffffffU;
+			BigInt<bitsize> num = BigInt<bitsize>(num_long_int, num_long_int2);
+		}
+
+		/////////// TEST BOOLEAN OPERATORS
+		bool test_not_equal_to() {
+			BigInt<bitsize> num = "2337616833552046603458334740849159417653411302789319245661"; // 232-bit hex
+			BigInt<bitsize> num1 = "2043835430954379549087549803752094857685945098653096065479"; // 232-bit hex
+			return num != num1;
 		}
 		
 		/////////// TEST BASIC ARITHMETIC

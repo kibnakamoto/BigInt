@@ -23,7 +23,8 @@ class Test : public BigInt<bitsize>
 			return str;
 		}
 
-		std::string rand_str(uint16_t _bitsize) {
+		std::string rand_str(uint16_t _bitsize)
+		{
 		    // random byte using Mersenne Twister, generate random bitset length, then generate a random string of that random length
     		std::random_device randDev;
     		std::mt19937 generator(randDev() ^ time(NULL));
@@ -45,13 +46,12 @@ class Test : public BigInt<bitsize>
 					ptr++ = hex_digits[hexset[i/4] & 0x0f];
 				}
 			}
-			
 			return str;
 		}
 
 	public:
 		std::string _op;
-		Test() {
+		explicit Test() {
 			// convert operator array to string
 			_op = optostr(BigInt<bitsize>::op);
 		}
@@ -131,7 +131,7 @@ class Test : public BigInt<bitsize>
 		}
 
 		bool test_bool_not0() {
-			BigInt<bitsize> num = "0"; // 232-bit hex
+			BigInt<bitsize> num = "0"; // 1-bit hex
 			return !num;
 		}
 		

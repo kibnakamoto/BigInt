@@ -110,6 +110,7 @@ template<uint16_t bitsize>
 [[nodiscard("discarded BigInt boolean and operator&&")]]
 constexpr bool BigInt<bitsize>::operator&&(const BigInt &num)
 {
+	
 	return 0;
 }
 
@@ -132,7 +133,14 @@ template<uint16_t bitsize>
 [[nodiscard("discarded BigInt boolean not operator!")]]
 constexpr bool BigInt<bitsize>::operator!()
 {
-	return 0;
+	bool notzero = 0;
+	for(uint16_t i=0;i<op_size;i++) {
+		if(op[i] != 0) {
+			notzero = 1;
+			break;
+		}
+	}
+	return notzero;
 }
 
 // boolean operator, check if not equal to
@@ -140,7 +148,20 @@ template<uint16_t bitsize>
 [[nodiscard("discarded BigInt boolean not equal to operator!=")]]
 constexpr bool BigInt<bitsize>::operator!=(const BigInt &num)
 {
-	return 0;
+	// the smaller iterator, smallest op_size, use to iterate safely without getting signal SEGV
+	bool notequal = 0;
+	if(op_size >= num.op_size) {
+		const uint16_t smaller_iter = num.op_size;
+		const uint16_t bigger_iter = op_size;
+		for(uint16_t i=smaller_iter;i<bigger_iter && !notequal;i++) notequal |= op[i] != 0;
+		for(uint16_t i=0;i<smaller_iter && !notequal;i++) notequal |= op[i] != num.op[i];
+	} else {
+		const uint16_t smaller_iter = op_size;
+		const uint16_t bigger_iter = num.op_size;
+		for(uint16_t i=smaller_iter;i<bigger_iter && !notequal;i++) notequal |= num.op[i] != 0;
+		for(uint16_t i=0;i<smaller_iter && !notequal;i++) notequal |= op[i] != num.op[i];
+	}
+	return notequal;
 }
 
 template<uint16_t bitsize>

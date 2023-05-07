@@ -102,7 +102,6 @@ class BigInt {
 		
 		// delete operators for deleting run-time objects
 		inline void operator delete(void *dat); // delete object itself
-		inline void operator delete[](void *dat); // destroy all run-time data in object
 
 		// implicit conversion operators
 		inline constexpr operator __uint128_t() const noexcept;
@@ -163,11 +162,7 @@ class BigInt {
 			bool _is_hex = rm_trailhex(input); // remove trailing character if it exists
 			if(!_is_hex) { // if no hex trail character '0x'
 				_is_hex = is_hex(input, input_len); // check if input is hex
-			} else {
-				return 1;
-			}
-			if(!_is_hex) {
-				return 0;
+				return _is_hex;
 			} else {
 				return 1;
 			}

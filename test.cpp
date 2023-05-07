@@ -8,12 +8,13 @@
 #include "bigint.h"
 
 // TODO: set testing with different bitsizes, e.g. one is 256 while other is 512. test operators using this
-// TODO: add looping with different values to testing
+// TODO: add looping and assign everything non-constexpr to rand_str
 
 template<uint16_t bitsize>
 class Test : public BigInt<bitsize>
 {
 	protected:
+		static constexpr const char hex_digits[17] = "0123456789abcdef";
 		std::string optostr(uint64_t *__op)
 		{
 			// convert operator array to string
@@ -26,21 +27,25 @@ class Test : public BigInt<bitsize>
 		    // random byte using Mersenne Twister, generate random bitset length, then generate a random string of that random length
     		std::random_device randDev;
     		std::mt19937 generator(randDev() ^ time(NULL));
-    		std::uniform_int_distribution<uint16_t> distr;
+    		std::uniform_int_distribution<uint16_t> distr(0, _bitsize);
     		std::uniform_int_distribution<bool> distr2;
 			uint16_t length = distr(generator);
 			bool bitset[length];
 			uint16_t hexlen = length%4==0 ? length/4 : length/4+1;
 			uint8_t hexset[hexlen];
+			std::string str;
+			char* ptr = &str[0];
 			for(uint16_t i=0;i<length;i++) {
 				if(i%4) hexset[i] = 0x0000;
 				bitset[i] = distr2(generator);
 				hexset[i/4] <<= 1;
 				hexset[i/4] |= bitset[i];
+				if(i%4==3) {
+					ptr++ = hex_digits[hexset[i/4] >> 4];
+					ptr++ = hex_digits[hexset[i/4] & 0x0f];
+				}
 			}
 			
-			// convert bitset to numbers
-			std::string str = (char*)hexset;
 			return str;
 		}
 
@@ -108,10 +113,26 @@ class Test : public BigInt<bitsize>
 		}
 
 		/////////// TEST BOOLEAN OPERATORS
-		bool test_not_equal_to() {
+		bool test_bool_not_equal() {
 			BigInt<bitsize> num = "2337616833552046603458334740849159417653411302789319245661"; // 232-bit hex
 			BigInt<bitsize> num1 = "2043835430954379549087549803752094857685945098653096065479"; // 232-bit hex
 			return num != num1;
+		}
+
+		bool test_bool_not_equal_equal() {
+			BigInt<bitsize> num = "2337616833552046603458334740849159417653411302789319245661"; // 232-bit hex
+			BigInt<bitsize> num1 = "2337616833552046603458334740849159417653411302789319245661"; // 232-bit hex
+			return num != num1;
+		}
+
+		bool test_bool_not() {
+			BigInt<bitsize> num = "2337616833552046603458334740849159417653411302789319245661"; // 232-bit hex
+			return !num;
+		}
+
+		bool test_bool_not0() {
+			BigInt<bitsize> num = "0"; // 232-bit hex
+			return !num;
 		}
 		
 		/////////// TEST BASIC ARITHMETIC

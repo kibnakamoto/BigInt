@@ -49,8 +49,7 @@ class BigInt {
 		BigInt(const char *input);
 
 		// numerical input. If number is 256-bit, input = left 128-bit, right 128-bit
-		template<size_t count> // number of arguements
-		explicit BigInt(__uint128_t input, ...);
+		explicit BigInt(const uint16_t count, __uint128_t input, ...);
 
 		// input as operation array
 		explicit BigInt(uint64_t *input, uint16_t len);

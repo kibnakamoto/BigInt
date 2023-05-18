@@ -23,8 +23,7 @@ BigInt<bitsize>::BigInt(const char* input)
 
 // numerical input. If number is 256-bit, input = left 128-bit, right 128-bit
 template<uint16_t bitsize> 
-template<size_t count> // number of arguments
-BigInt<bitsize>::BigInt(__uint128_t input, ...) {
+BigInt<bitsize>::BigInt(const uint16_t count, __uint128_t input, ...) {
     // uint128_t input to 2 uint64_t integers
 	// constant mask values
     static constexpr const __uint128_t bottom_mask = (__uint128_t{1} << 64) - 1; // 0x0000000000000000ffffffffffffffffU

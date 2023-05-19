@@ -42,6 +42,11 @@ class BigInt {
 			return substr;
 		}
 	public:
+#pragma GCC diagnostic ignored "-Wignored-qualifiers"
+		static const constexpr inline uint16_t __get_op_size() { return op_size; }
+#pragma GCC diagnostic pop
+		inline uint64_t* __get_op() { return op; }
+
 		const constexpr static uint16_t size = bitsize;
 		template<uint8_t base=0> // type of input (int = base 10, hex = base 16)
 		BigInt(std::string input);
@@ -49,8 +54,7 @@ class BigInt {
 		BigInt(const char *input);
 
 		// numerical input. If number is 256-bit, input = left 128-bit, right 128-bit
-		template<size_t count> // number of arguements
-		explicit BigInt(__uint128_t input, ...);
+		constexpr explicit BigInt(const uint16_t count, __uint128_t input, ...);
 
 		// input as operation array
 		explicit BigInt(uint64_t *input, uint16_t len);

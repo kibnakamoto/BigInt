@@ -23,15 +23,14 @@ BigInt<bitsize>::BigInt(const char* input)
 
 // numerical input. If number is 256-bit, input = left 128-bit, right 128-bit
 template<uint16_t bitsize> 
-template<size_t count> // number of arguments
-BigInt<bitsize>::BigInt(__uint128_t input, ...) {
+constexpr BigInt<bitsize>::BigInt(const uint16_t count, __uint128_t input, ...) {
     // uint128_t input to 2 uint64_t integers
 	// constant mask values
     static constexpr const __uint128_t bottom_mask = (__uint128_t{1} << 64) - 1; // 0x0000000000000000ffffffffffffffffU
     static constexpr const __uint128_t top_mask = ~bottom_mask;                  // 0xffffffffffffffff0000000000000000U
 
 	// pad the operator array
-	const constexpr uint16_t tmp = op_size-(count<<1)-1;
+	const uint16_t tmp = op_size-(count<<1)-1;
 	op_nonleading_i = tmp;
 	for(uint16_t i=0;i<op_nonleading_i;i++) op[i] = 0x0000000000000000ULL;
 

@@ -9,7 +9,6 @@
 #include <chrono>
 
 #include "bigint.h"
-//#include "bigint.cpp"
 
 template<uint16_t bitsize>
 class Benchmark;

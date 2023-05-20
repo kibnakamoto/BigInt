@@ -13,8 +13,13 @@ bigint: ${EXEC}
 	${CXX} ${CXXFLAGS} ${CPP} -o ${EXEC}
 
 test: ${TEST_EXEC}
-	${CXX} ${TEST_CXXFLAGS} ${TEST} -o ${TEST_EXEC}
+	${CXX} ${TEST_CXXFLAGS} ${BIGINT} ${TEST} -o ${TEST_EXEC}
 
 clean:
 	rm -rf ${EXEC} ${TEST_EXEC}
 
+run-bigint:
+	${CXX} ${CXXFLAGS} ${CPP} -o ${EXEC} && ./bigint
+
+run-test:
+	${CXX} ${TEST_CXXFLAGS} ${BIGINT} ${TEST} -o ${TEST_EXEC} && ./test

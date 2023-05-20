@@ -1,2 +1,2 @@
-sh compile.sh
+make
 ./bigint

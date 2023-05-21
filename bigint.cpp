@@ -7,23 +7,25 @@
 
 #include "bigint.h"
 
+namespace BigInt
+{
 template<uint16_t bitsize>
 template<uint8_t base> // type of input (oct = base 8, hex = base 16)
-BigInt<bitsize>::BigInt(std::string input)
+BigUint<bitsize>::BigUint(std::string input)
 {
 	strtobigint<base>(input.c_str());
 }
 
 template<uint16_t bitsize>
 template<uint8_t base> // type of input (oct = base 8, hex = base 16)
-BigInt<bitsize>::BigInt(const char* input)
+BigUint<bitsize>::BigUint(const char* input)
 {
 	strtobigint<base>(input); // to avoid annoying C++ conversion error
 }
 
 // numerical input. If number is 256-bit, input = left 128-bit, right 128-bit
 template<uint16_t bitsize> 
-constexpr BigInt<bitsize>::BigInt(const uint16_t count, __uint128_t input, ...) {
+constexpr BigUint<bitsize>::BigUint(const uint16_t count, __uint128_t input, ...) {
     // uint128_t input to 2 uint64_t integers
 	// constant mask values
     static constexpr const __uint128_t bottom_mask = (__uint128_t{1} << 64) - 1; // 0x0000000000000000ffffffffffffffffU
@@ -44,7 +46,7 @@ constexpr BigInt<bitsize>::BigInt(const uint16_t count, __uint128_t input, ...) 
 
 // assignment to operator array of known length
 template<uint16_t bitsize>
-BigInt<bitsize>::BigInt(uint64_t *input, uint16_t len) // input order has to be: input[0] = most left 64-bit
+BigUint<bitsize>::BigUint(uint64_t *input, uint16_t len) // input order has to be: input[0] = most left 64-bit
 {
 	// calculate pad count
 	uint16_t pad_count;
@@ -55,8 +57,8 @@ BigInt<bitsize>::BigInt(uint64_t *input, uint16_t len) // input order has to be:
 				found = true;
 		}
 		if(found) { // maybe input[op_size] = 0 but input[op_size+1] !=0, therefore use the found defined above
-			throw int_too_large_error(("given integer is too large for the defined BigInt<" + std::to_string(bitsize) +
-									  "> which is not enough to hold a value of BigInt<" + std::to_string(len*64) + ">").c_str());
+			throw int_too_large_error(("given integer is too large for the defined BigUint<" + std::to_string(bitsize) +
+									  "> which is not enough to hold a value of BigUint<" + std::to_string(len*64) + ">").c_str());
 		} else {
 			uint16_t nonzeroi; // index of non-zero input element
 			for(uint16_t i=op_size+1;i<len;i++) { // basically continuation of previous loop
@@ -83,7 +85,7 @@ BigInt<bitsize>::BigInt(uint64_t *input, uint16_t len) // input order has to be:
 
 //#pragma GCC diagnostic ignored "-Wtype-limits"
 //template<uint16_t bitsize>
-//BigInt<bitsize> BigInt<bitsize>::operator=(const BigInt &num)
+//BigUint<bitsize> BigUint<bitsize>::operator=(const BigUint &num)
 //{
 //	// assign non-leading-zero elements of the operator array
 //	if(num.op_size <= op_size) {
@@ -98,39 +100,39 @@ BigInt<bitsize>::BigInt(uint64_t *input, uint16_t len) // input order has to be:
 //#pragma GCC diagnostic pop
 
 template<uint16_t bitsize>
-[[nodiscard("discarded BigInt assignment operator")]]
-constexpr BigInt<bitsize> BigInt<bitsize>::operator=(const char* &num)
+[[nodiscard("discarded BigUint assignment operator")]]
+constexpr BigUint<bitsize> BigUint<bitsize>::operator=(const char* &num)
 {
 	delete this; // object suicide
-	return BigInt<bitsize>(num); // reconstruct as new object
+	return BigUint<bitsize>(num); // reconstruct as new object
 }
 
 template<uint16_t bitsize>
-[[nodiscard("discarded BigInt boolean and operator&&")]]
-constexpr bool BigInt<bitsize>::operator&&(const BigInt &num)
+[[nodiscard("discarded BigUint boolean and operator&&")]]
+constexpr bool BigUint<bitsize>::operator&&(const BigUint &num)
 {
 	
 	return 0;
 }
 
 template<uint16_t bitsize>
-[[nodiscard("discarded BigInt boolean or operator||")]]
-constexpr bool BigInt<bitsize>::operator||(const BigInt &num)
+[[nodiscard("discarded BigUint boolean or operator||")]]
+constexpr bool BigUint<bitsize>::operator||(const BigUint &num)
 {
 	return 0;
 }
 
 template<uint16_t bitsize>
-[[nodiscard("discarded BigInt boolean equal to operator==")]]
-constexpr bool BigInt<bitsize>::operator==(const BigInt &num)
+[[nodiscard("discarded BigUint boolean equal to operator==")]]
+constexpr bool BigUint<bitsize>::operator==(const BigUint &num)
 {
 	return 0;
 }
 
 // check if initialized and not zero
 template<uint16_t bitsize>
-[[nodiscard("discarded BigInt boolean not operator!")]]
-constexpr bool BigInt<bitsize>::operator!()
+[[nodiscard("discarded BigUint boolean not operator!")]]
+constexpr bool BigUint<bitsize>::operator!()
 {
 	bool notzero = 0;
 	for(uint16_t i=0;i<op_size;i++) {
@@ -144,8 +146,8 @@ constexpr bool BigInt<bitsize>::operator!()
 
 // boolean operator, check if not equal to
 template<uint16_t bitsize>
-[[nodiscard("discarded BigInt boolean not equal to operator!=")]]
-constexpr bool BigInt<bitsize>::operator!=(const BigInt &num)
+[[nodiscard("discarded BigUint boolean not equal to operator!=")]]
+constexpr bool BigUint<bitsize>::operator!=(const BigUint &num)
 {
 	// the smaller iterator, smallest op_size, use to iterate safely without getting signal SEGV
 	bool notequal = 0;
@@ -164,37 +166,37 @@ constexpr bool BigInt<bitsize>::operator!=(const BigInt &num)
 }
 
 template<uint16_t bitsize>
-[[nodiscard("discarded BigInt boolean less than operator<")]]
-constexpr bool BigInt<bitsize>::operator<(const BigInt &num)
+[[nodiscard("discarded BigUint boolean less than operator<")]]
+constexpr bool BigUint<bitsize>::operator<(const BigUint &num)
 {
 	return 0;
 }
 
 template<uint16_t bitsize>
-[[nodiscard("discarded BigInt less or equal to operator<=")]]
-constexpr bool BigInt<bitsize>::operator<=(const BigInt &num)
+[[nodiscard("discarded BigUint less or equal to operator<=")]]
+constexpr bool BigUint<bitsize>::operator<=(const BigUint &num)
 {
 	return 0;
 }
 
 template<uint16_t bitsize>
-[[nodiscard("discarded BigInt greater operator>")]]
-constexpr bool BigInt<bitsize>::operator>(const BigInt &num)
+[[nodiscard("discarded BigUint greater operator>")]]
+constexpr bool BigUint<bitsize>::operator>(const BigUint &num)
 {
 	return 0;
 }
 
 template<uint16_t bitsize>
-[[nodiscard("discarded BigInt greater or equal to operator>=")]]
-constexpr bool BigInt<bitsize>::operator>=(const BigInt &num)
+[[nodiscard("discarded BigUint greater or equal to operator>=")]]
+constexpr bool BigUint<bitsize>::operator>=(const BigUint &num)
 {
 	return 0;
 }
 
 
 template<uint16_t bitsize>
-[[nodiscard("discarded BigInt operator+")]]
-constexpr BigInt<bitsize> BigInt<bitsize>::operator+(const BigInt &num)
+[[nodiscard("discarded BigUint operator+")]]
+constexpr BigUint<bitsize> BigUint<bitsize>::operator+(const BigUint &num)
 {
 	uint64_t new_op[op_size];
 	std::copy(std::begin(op), std::end(op), std::begin(new_op)); // set to op
@@ -231,32 +233,18 @@ constexpr BigInt<bitsize> BigInt<bitsize>::operator+(const BigInt &num)
 	std::cout << std::endl << "answer: " << "466ec2d066aa408cc068b0668e810922b282eca6822604f1263248acc2";
 
 	std::cout << std::endl << "returned" << std::endl;
-	return BigInt<bitsize>(new_op, op_size);
+	return BigUint<bitsize>(new_op, op_size);
 }
 
 template<uint16_t bitsize>
-[[nodiscard("discarded BigInt operator+")]]
-constexpr BigInt<bitsize> BigInt<bitsize>::operator-(const BigInt &num)
+[[nodiscard("discarded BigUint operator+")]]
+constexpr BigUint<bitsize> BigUint<bitsize>::operator-(const BigUint &num)
 {
 	// 0x7fffffffffffffffffffffffffffffffU // largest signed 128-bit num
     static constexpr const __int128_t int128_max = ((__int128_t)0x7fffffffffffffffU<<64)|0xffffffffffffffffU;
 	
 	// first check if number is bigger
 }
-
-int main()
-{
-	// uint256_t num="256";
-	// uint256_t num2 = std::string("256");
-	uint256_t num="2337616833552046603458334740849159417653411302789319245661"; // 232-bit hex
-	uint256_t num2 = std::string("2337616833552046603458334740849159417653411302789319245661"); // 232-bit hex
-	// constexpr uint256_t num3 = BigInt<256><1>(256);
-	std::cout << "int num: " << num;
-	std::cout << "\nhex num2: " << std::hex << num2;
-	auto num3 = num + num2;
-	std::cout << "\nnum+num2: " << std::hex << num3;
-	std::cout << std::endl;
-	return 0;
-}
+};
 
 #endif /* BIGINT_CPP */

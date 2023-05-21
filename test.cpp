@@ -161,6 +161,7 @@ class Test : public BigUint<bitsize>
 template<uint16_t bitsize>
 class Benchmark : public Test<bitsize>
 {
+	public:
 	// assignment operators (11 functions)
 	// test_chararr_assignment, test_str_assignment, test_long_chararr_assignment, test_long_str_assignment, test_long_hex_assignment, test_long_nonint_assignment, test_long_nonhex_assignment, test_nonint_assignment, test_nonhex_assignment, test_int_assignment, test_long_int_assignment, 
 

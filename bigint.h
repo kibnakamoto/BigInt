@@ -44,10 +44,10 @@ namespace BigInt
 				return substr;
 			}
 		public:
-	#pragma GCC diagnostic push
-	#pragma GCC diagnostic ignored "-Wignored-qualifiers" // silence this warning, the qualifiers are necesarry
+			#pragma GCC diagnostic push
+			#pragma GCC diagnostic ignored "-Wignored-qualifiers" // silence this warning, the qualifiers are necesarry
 			static const constexpr inline uint16_t __get_op_size() { return op_size; }
-	#pragma GCC diagnostic pop
+			#pragma GCC diagnostic pop
 			inline uint64_t* __get_op() { return op; }
 	
 			const constexpr static uint16_t size = bitsize;

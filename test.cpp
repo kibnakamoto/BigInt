@@ -1,4 +1,6 @@
 // Test the code
+#ifndef TEST_CPP
+#define TEST_CPP
 
 #include <cmath>
 #include <cstdlib>
@@ -10,17 +12,19 @@
 
 #include "bigint.h"
 
+using namespace BigInt;
+
 template<uint16_t bitsize>
 class Benchmark;
 
 // Test Bigint for values
 template<uint16_t bitsize>
-class Test : public BigInt<bitsize>
+class Test : public BigUint<bitsize>
 {
 	friend class Benchmark<bitsize>;
 	protected:
-		static constexpr const uint16_t op_size = BigInt<bitsize>::__get_op_size();
-		uint64_t* op = BigInt<bitsize>::__get_op();
+		static constexpr const uint16_t op_size = BigUint<bitsize>::__get_op_size();
+		uint64_t* op = BigUint<bitsize>::__get_op();
 		static constexpr const char hex_digits[17] = "0123456789abcdef";
 		std::string optostr(uint64_t *__op)
 		{
@@ -60,93 +64,93 @@ class Test : public BigInt<bitsize>
 		std::string _op;
 		explicit Test() {
 			// convert operator array to string
-			_op = optostr(BigInt<bitsize>::op);
+			_op = optostr(BigUint<bitsize>::op);
 		}
 
 		/////////// TEST STRING AND CHAR ASSIGNMENT OPERATORS (INT, HEX)
 		virtual void test_chararr_assignment() {
-			BigInt<bitsize> num="256";
+			BigUint<bitsize> num="256";
 		}
 		
 		virtual void test_str_assignment() {
-			BigInt<bitsize> num = std::string("256");
+			BigUint<bitsize> num = std::string("256");
 		}
 		
 		virtual void test_long_chararr_assignment() {
-			BigInt<bitsize> num = "56539106072908298546665520023773392506479484700019806659891398441363832832";
+			BigUint<bitsize> num = "56539106072908298546665520023773392506479484700019806659891398441363832832";
 		}
 		
 		virtual void test_long_str_assignment() {
-			BigInt<bitsize> num = std::string("56539106072908298546665520023773392506479484700019806659891398441363832832");
+			BigUint<bitsize> num = std::string("56539106072908298546665520023773392506479484700019806659891398441363832832");
 		}
 		
 		virtual void test_long_hex_assignment() {
-			BigInt<bitsize> num = std::string("0x5653910607290829E8546665D5A200237733925064794847000198066598913984FF41363832B832F");
+			BigUint<bitsize> num = std::string("0x5653910607290829E8546665D5A200237733925064794847000198066598913984FF41363832B832F");
 		}
 		
 		// false input
 		virtual void test_long_nonint_assignment() {
-			BigInt<bitsize> num = std::string("5653910#jrkyls607290829E8546665D5A2002377339250647948giutphgq384700019806659f891398");
-			BigInt<bitsize> num2 = "5653910#jrkyls607290829E8546665D5A2002377339250647948giutphgq384700019806659f891398";
+			BigUint<bitsize> num = std::string("5653910#jrkyls607290829E8546665D5A2002377339250647948giutphgq384700019806659f891398");
+			BigUint<bitsize> num2 = "5653910#jrkyls607290829E8546665D5A2002377339250647948giutphgq384700019806659f891398";
 		}
 		
 		// false input
 		virtual void test_long_nonhex_assignment() {
-			BigInt<bitsize> num = std::string("0x5653910#607290829E8546665D5A2002377339250647948giutphgq384700019806659f891398");
-			BigInt<bitsize> num2 = "0x5653910#607290829E8546665D5A2002377339250647948giutphgq384700019806659f891398";
+			BigUint<bitsize> num = std::string("0x5653910#607290829E8546665D5A2002377339250647948giutphgq384700019806659f891398");
+			BigUint<bitsize> num2 = "0x5653910#607290829E8546665D5A2002377339250647948giutphgq384700019806659f891398";
 		}
 		
 		// false input
 		virtual void test_nonint_assignment() {
-			BigInt<bitsize> num = std::string("t3f");
-			BigInt<bitsize> num2 = "t3f";
+			BigUint<bitsize> num = std::string("t3f");
+			BigUint<bitsize> num2 = "t3f";
 		}
 		
 		// false input
 		virtual void test_nonhex_assignment() {
-			BigInt<bitsize> num = std::string("0xaTf");
-			BigInt<bitsize> num2 = "0xaTf";
+			BigUint<bitsize> num = std::string("0xaTf");
+			BigUint<bitsize> num2 = "0xaTf";
 		}
 
 		/////////// TEST STRING AND CHAR ASSIGNMENT OPERATORS (INT, HEX)
 		virtual void test_int_assignment() {
-			BigInt<bitsize> num = BigInt<bitsize>(1, 256);
+			BigUint<bitsize> num = BigUint<bitsize>(1, 256);
 		}
 		
 		virtual void test_long_int_assignment() {
     		static constexpr const __uint128_t num_long_int = ((__uint128_t)0xabcde0123456789fU<<64)|0xffffffffffffffffU;
     		static constexpr const __uint128_t num_long_int2 = ((__uint128_t)0xffffffffffffffffU<<64)|0xffffffffffffffffU;
-			BigInt<bitsize> num = BigInt<bitsize>(2, num_long_int, num_long_int2);
+			BigUint<bitsize> num = BigUint<bitsize>(2, num_long_int, num_long_int2);
 		}
 
 		/////////// TEST BOOLEAN OPERATORS
 		virtual bool test_bool_not_equal() {
-			BigInt<bitsize> num = "2337616833552046603458334740849159417653411302789319245661"; // 232-bit hex
-			BigInt<bitsize> num1 = "2043835430954379549087549803752094857685945098653096065479"; // 232-bit hex
+			BigUint<bitsize> num = "2337616833552046603458334740849159417653411302789319245661"; // 232-bit hex
+			BigUint<bitsize> num1 = "2043835430954379549087549803752094857685945098653096065479"; // 232-bit hex
 			return num != num1;
 		}
 
 		virtual bool test_bool_not_equal_equal() {
-			BigInt<bitsize> num = "2337616833552046603458334740849159417653411302789319245661"; // 232-bit hex
-			BigInt<bitsize> num1 = "2337616833552046603458334740849159417653411302789319245661"; // 232-bit hex
+			BigUint<bitsize> num = "2337616833552046603458334740849159417653411302789319245661"; // 232-bit hex
+			BigUint<bitsize> num1 = "2337616833552046603458334740849159417653411302789319245661"; // 232-bit hex
 			return num != num1;
 		}
 
 		virtual bool test_bool_not() {
-			BigInt<bitsize> num = "2337616833552046603458334740849159417653411302789319245661"; // 232-bit hex
+			BigUint<bitsize> num = "2337616833552046603458334740849159417653411302789319245661"; // 232-bit hex
 			return !num;
 		}
 
 		virtual bool test_bool_not0() {
-			BigInt<bitsize> num = "0"; // 1-bit hex
+			BigUint<bitsize> num = "0"; // 1-bit hex
 			return !num;
 		}
 		
 		/////////// TEST BASIC ARITHMETIC
 		virtual bool test_addition() {
-			BigInt<bitsize> num="2337616833552046603458334740849159417653411302789319245661"; // 232-bit hex
-			BigInt<bitsize> num2 = std::string("2337616833552046603458334740849159417653411302789319245661"); // 232-bit hex
-			BigInt<bitsize> num3 = num + num2;
+			BigUint<bitsize> num="2337616833552046603458334740849159417653411302789319245661"; // 232-bit hex
+			BigUint<bitsize> num2 = std::string("2337616833552046603458334740849159417653411302789319245661"); // 232-bit hex
+			BigUint<bitsize> num3 = num + num2;
 			std::cout << std::hex << std::endl << "			   output: " << num3;
 			std::cout << std::endl << "the correct answer: 466ec2d066aa408cc068b0668e810922b282eca6822604f1263248acc2";
 			return optostr(num3.__get_op()) == "466ec2d066aa408cc068b0668e810922b282eca6822604f1263248acc2";
@@ -175,10 +179,10 @@ int main()
 
 	/************* TODO: VALUE TESTS *************/
 
+	/************* BENCHMARK TESTS *************/
 	std::chrono::system_clock::time_point timer_starts[30];
 	std::chrono::system_clock::time_point timer_ends[30];
 
-	/************* BENCHMARK TESTS *************/
 	Benchmark<bitsize> benchmarker = Benchmark<bitsize>();
 
 	// test char-array hexstring assignment
@@ -191,7 +195,7 @@ int main()
 	//for(uint32_t i=0;i<count;i++) benchmarker.test_str_assignment();
 	timer_ends[1] = std::chrono::high_resolution_clock::now();
 	
-
-	
 	return 0;
 }
+
+#endif /* TEST_CPP*/

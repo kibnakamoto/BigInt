@@ -1,7 +1,7 @@
 .SUFFIXES: .cpp
 CXX ?= g++
 CXXFLAGS ?= -g -std=c++2b -Wall -pedantic -Wextra # add -O4
-CPP = bigint.cpp
+CPP = bigint.cpp # ovverride previous definition of ${CPP} so don't replace = with ?=
 BIGINT ?=  ${CPP} bigint.h
 EXEC ?= bigint
 

@@ -145,6 +145,24 @@ class Test : public BigUint<bitsize>
 			BigUint<bitsize> num = "0"; // 1-bit hex
 			return !num;
 		}
+
+		virtual bool test_bool_less() {
+			BigUint<bitsize> num =  "2337616833552046603458334740849159417653411302789319245660"; // 232-bit hex
+			BigUint<bitsize> num1 = "2337616833552046603458334740849159417653411302789319245661"; // 232-bit hex
+			return num < num1;
+		}
+
+		virtual bool *test_bool_less_equal() {
+			BigUint<bitsize> num = "2337616833552046603458334740849159417653411302789319245660"; // 232-bit hex
+			BigUint<bitsize> num1 = "2337616833552046603458334740849159417653411302789319245661"; // 232-bit hex
+			bool *ret;
+			*ret = (num <= num1);
+			if(ret) {
+				BigUint<bitsize> num2 = "2337616833552046603458334740849159417653411302789319245661"; // 232-bit hex
+				*ret++ = num1 <= num2; // should be equal
+			}
+			return ret;
+		}
 		
 		/////////// TEST BASIC ARITHMETIC
 		virtual bool test_addition() {

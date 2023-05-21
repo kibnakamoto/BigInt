@@ -24,6 +24,9 @@ namespace BigInt
 	}
 	
 	// numerical input. If number is 256-bit, input = left 128-bit, right 128-bit
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Wpragmas"
+	#pragma GCC diagnostic ignored "-Wc++2b-extensions"
 	template<uint16_t bitsize> 
 	constexpr BigUint<bitsize>::BigUint(const uint16_t count, __uint128_t input, ...) {
 	    // uint128_t input to 2 uint64_t integers
@@ -43,6 +46,7 @@ namespace BigInt
 	        op[op_size-i*2-2] = (num&top_mask) >> 64;
 	    }
 	}
+	#pragma GCC diagnostic pop
 	
 	// assignment to operator array of known length
 	template<uint16_t bitsize>
@@ -168,7 +172,7 @@ namespace BigInt
 	
 	template<uint16_t bitsize>
 	[[nodiscard("discarded BigUint boolean less than operator<")]]
-	constexpr bool BigUint<bitsize>::operator<(const BigUint &num) // Test
+	constexpr bool BigUint<bitsize>::operator<(const BigUint &num)
 	{
 		bool less = 0;
 	
@@ -190,21 +194,58 @@ namespace BigInt
 	[[nodiscard("discarded BigUint less or equal to operator<=")]]
 	constexpr bool BigUint<bitsize>::operator<=(const BigUint &num)
 	{
-		return 0;
+		bool less = 0; // or equal
+	
+		// condition to avoid iterating over non-existing members of op
+		const uint16_t iterator = op_size < num.op_size ? op_size : num.op_size;
+		for(uint16_t i=0;i<iterator;i++) {
+			if(op[i] <= num.op[i]) {
+				less = 1;
+				break;
+			} else {
+				break;
+			}
+		}
+		return less;
 	}
 	
 	template<uint16_t bitsize>
 	[[nodiscard("discarded BigUint greater operator>")]]
 	constexpr bool BigUint<bitsize>::operator>(const BigUint &num)
 	{
-		return 0;
+		bool greater = 0; // or equal
+	
+		// condition to avoid iterating over non-existing members of op
+		const uint16_t iterator = op_size < num.op_size ? op_size : num.op_size;
+		for(uint16_t i=0;i<iterator;i++) {
+			if(op[i] > num.op[i]) {
+				greater = 1;
+				break;
+			} else {
+				if(op[i] == num.op[i]) continue;
+				break;
+			}
+		}
+		return greater;
 	}
 	
 	template<uint16_t bitsize>
 	[[nodiscard("discarded BigUint greater or equal to operator>=")]]
 	constexpr bool BigUint<bitsize>::operator>=(const BigUint &num)
 	{
-		return 0;
+		bool greater = 0; // or equal
+	
+		// condition to avoid iterating over non-existing members of op
+		const uint16_t iterator = op_size < num.op_size ? op_size : num.op_size;
+		for(uint16_t i=0;i<iterator;i++) {
+			if(op[i] >= num.op[i]) {
+				greater = 1;
+				break;
+			} else {
+				break;
+			}
+		}
+		return greater;
 	}
 	
 	

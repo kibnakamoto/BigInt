@@ -1,4 +1,4 @@
-// main file of BigInt
+// main file of BigInt, a demo of how to use library
 #include <iostream>
 #include <string.h>
 

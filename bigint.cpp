@@ -83,6 +83,7 @@ BigUint<bitsize>::BigUint(uint64_t *input, uint16_t len) // input order has to b
 
 // TODO: recreate the above function with len as template parameter and as constexpr function
 
+//#pragma GCC diagnostic push
 //#pragma GCC diagnostic ignored "-Wtype-limits"
 //template<uint16_t bitsize>
 //BigUint<bitsize> BigUint<bitsize>::operator=(const BigUint &num)
@@ -236,6 +237,9 @@ constexpr BigUint<bitsize> BigUint<bitsize>::operator+(const BigUint &num)
 	return BigUint<bitsize>(new_op, op_size);
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpragmas"
+#pragma GCC diagnostic ignored "-Wc++2b-extensions"
 template<uint16_t bitsize>
 [[nodiscard("discarded BigUint operator+")]]
 constexpr BigUint<bitsize> BigUint<bitsize>::operator-(const BigUint &num)
@@ -245,6 +249,7 @@ constexpr BigUint<bitsize> BigUint<bitsize>::operator-(const BigUint &num)
 	
 	// first check if number is bigger
 }
+#pragma GCC diagnostic pop
 };
 
 #endif /* BIGINT_CPP */

@@ -44,6 +44,7 @@ namespace BigInt
 				return substr;
 			}
 		public:
+	#pragma GCC diagnostic push
 	#pragma GCC diagnostic ignored "-Wignored-qualifiers" // silence this warning, the qualifiers are necesarry
 			static const constexpr inline uint16_t __get_op_size() { return op_size; }
 	#pragma GCC diagnostic pop
@@ -282,6 +283,7 @@ namespace BigInt
 	using uint512_t = BigUint<512>;
 }; /* NAMESPACE BIGINT */
 
+// include here because of template class and function
 #include "bigint.cpp"
 
 #endif /* BIGINT_H */

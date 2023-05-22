@@ -13,10 +13,10 @@ TEST ?= test.cpp
 TEST_CXXFLAGS ?= -g -std=c++2b
 TEST_EXEC ?= test
 
-bigint: ${EXEC}
+${EXEC}: ${BIGINT_CPP}
 	${CXX} ${CXXFLAGS} ${CPP} -o ${EXEC}
 
-test: ${TEST_EXEC}
+${TEST_EXEC}: ${TEST}
 	${CXX} ${CXXFLAGS} -c ${BIGINT_CPP} -o ${BIGINT_OBJ}
 	${CXX} ${TEST_CXXFLAGS} -c ${TEST} -o ${TEST_OBJ}
 	${CXX} bigint.o test.o -o ${TEST_EXEC}
@@ -24,8 +24,14 @@ test: ${TEST_EXEC}
 clean:
 	rm -rf ${EXEC} ${TEST_EXEC} ${OBJ}
 
-run-bigint:
+all:
+	${CXX} ${CXXFLAGS} ${CPP} -o ${EXEC}
+	${CXX} ${CXXFLAGS} -c ${BIGINT_CPP} -o ${BIGINT_OBJ}
+	${CXX} ${TEST_CXXFLAGS} -c ${TEST} -o ${TEST_OBJ}
+	${CXX} bigint.o test.o -o ${TEST_EXEC}
+
+run-bigint: ${BIGINT_CPP}
 	${CXX} ${CXXFLAGS} ${CPP} -o ${EXEC} && ./bigint
 
-run-test:
+run-test: ${TEST}
 	${CXX} ${TEST_CXXFLAGS} ${CPP} ${TEST} -o ${TEST_EXEC} && ./test

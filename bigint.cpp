@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <stdint.h>
+#include <cstdarg>
 
 #include "bigint.h"
 
@@ -27,24 +28,29 @@ namespace BigInt
 	#pragma GCC diagnostic push
 	#pragma GCC diagnostic ignored "-Wpragmas"
 	#pragma GCC diagnostic ignored "-Wc++2b-extensions"
+	#pragma GCC diagnostic ignored "-Wvarargs"
 	template<uint16_t bitsize> 
-	constexpr BigUint<bitsize>::BigUint(const uint16_t count, __uint128_t input, ...) {
+	constexpr BigUint<bitsize>::BigUint(const uint16_t count, __uint128_t ...) {
 	    // uint128_t input to 2 uint64_t integers
 		// constant mask values
 	    static constexpr const __uint128_t bottom_mask = (__uint128_t{1} << 64) - 1; // 0x0000000000000000ffffffffffffffffU
 	    static constexpr const __uint128_t top_mask = ~bottom_mask;                  // 0xffffffffffffffff0000000000000000U
+
+		std::va_list args;
+		va_start(args, count);
 	
 		// pad the operator array
-		const uint16_t tmp = op_size-(count<<1)-1;
-		op_nonleading_i = tmp;
-		for(uint16_t i=0;i<op_nonleading_i;i++) op[i] = 0x0000000000000000ULL;
+		const uint16_t count64 = count << 1; // count if input is 64-bits
+		op_nonleading_i = count64 < op_size? op_size-count64 : 0;
+		for(uint16_t i=0;i<=op_nonleading_i;i++) op[i] = 0x0000000000000000ULL;
 	
 		// add the inputs to the operator array
 	    for(size_t i=0;i<count;i++) {
-	        __uint128_t num = *((__uint128_t*)&input + i);
+	        __uint128_t num = va_arg(args, __uint128_t);
 	        op[op_size-i*2-1] = num&bottom_mask;
-	        op[op_size-i*2-2] = (num&top_mask) >> 64;
+	        op[op_size-i*2-2] = (num>>64)&top_mask;
 	    }
+		va_end(args);
 	}
 	#pragma GCC diagnostic pop
 	
@@ -131,7 +137,15 @@ namespace BigInt
 	[[nodiscard("discarded BigUint boolean equal to operator==")]]
 	constexpr bool BigUint<bitsize>::operator==(const BigUint &num)
 	{
-		return 0;
+		bool equal = 0;
+		if(op_size >= num.op_size) {
+			for(uint16_t i=num.op_size;i<op_size && !equal;i++) equal |= op[i] == 0;
+			for(uint16_t i=0;i<num.op_size && !equal;i++) equal |= op[i] == num.op[i];
+		} else {
+			for(uint16_t i=op_size;i<num.op_size && !equal;i++) equal |= num.op[i] == 0;
+			for(uint16_t i=0;i<op_size && !equal;i++) equal |= op[i] == num.op[i];
+		}
+		return equal;
 	}
 	
 	// check if initialized and not zero
@@ -154,18 +168,13 @@ namespace BigInt
 	[[nodiscard("discarded BigUint boolean not equal to operator!=")]]
 	constexpr bool BigUint<bitsize>::operator!=(const BigUint &num)
 	{
-		// the smaller iterator, smallest op_size, use to iterate safely without getting signal SEGV
 		bool notequal = 0;
 		if(op_size >= num.op_size) {
-			const uint16_t smaller_iter = num.op_size;
-			const uint16_t bigger_iter = op_size;
-			for(uint16_t i=smaller_iter;i<bigger_iter && !notequal;i++) notequal |= op[i] != 0;
-			for(uint16_t i=0;i<smaller_iter && !notequal;i++) notequal |= op[i] != num.op[i];
+			for(uint16_t i=num.op_size;i<op_size && !notequal;i++) notequal |= op[i] != 0;
+			for(uint16_t i=0;i<num.op_size && !notequal;i++) notequal |= op[i] != num.op[i];
 		} else {
-			const uint16_t smaller_iter = op_size;
-			const uint16_t bigger_iter = num.op_size;
-			for(uint16_t i=smaller_iter;i<bigger_iter && !notequal;i++) notequal |= num.op[i] != 0;
-			for(uint16_t i=0;i<smaller_iter && !notequal;i++) notequal |= op[i] != num.op[i];
+			for(uint16_t i=op_size;i<num.op_size && !notequal;i++) notequal |= num.op[i] != 0;
+			for(uint16_t i=0;i<op_size && !notequal;i++) notequal |= op[i] != num.op[i];
 		}
 		return notequal;
 	}
@@ -295,13 +304,17 @@ namespace BigInt
 	#pragma GCC diagnostic ignored "-Wpragmas"
 	#pragma GCC diagnostic ignored "-Wc++2b-extensions" // for some reason raises -Wpragmas because warning not found while it surpresses the warning at the same time
 	template<uint16_t bitsize>
-	[[nodiscard("discarded BigUint operator+")]]
+	[[nodiscard("discarded BigUint operator-")]]
 	constexpr BigUint<bitsize> BigUint<bitsize>::operator-(const BigUint &num)
 	{
 		// 0x7fffffffffffffffffffffffffffffffU // largest signed 128-bit num
 	    static constexpr const __int128_t int128_max = ((__int128_t)0x7fffffffffffffffU<<64)|0xffffffffffffffffU;
 		
 		// first check if number is bigger
+		if(*this == num) return BigUint<bitsize>(1, 0);
+		//else if(*this < num) 
+		//else 
+		return *this;
 	}
 	#pragma GCC diagnostic pop
 };

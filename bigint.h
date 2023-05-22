@@ -118,12 +118,6 @@ namespace BigInt
 			template<uint16_t n> friend std::ostream& operator<<(std::ostream& cout, BigUint<n> toprint);
 	
 		protected:
-			// return carry on a 64-bit number
-			constexpr inline uint64_t carry_size64_add(uint64_t num)
-			{
-				return UINT64_MAX - num;
-			}
-	
 			// remove 0x if starting with 0x
 			constexpr inline bool rm_trailhex(const char *&num)
 			{
@@ -141,25 +135,6 @@ namespace BigInt
 				for(size_t i=0;i<numlen;i++)
 					if(not isxdigit(*(num+i))) return 0;
 				return 1;
-			}
-	
-			// number to hex
-			template<typename T>
-			inline constexpr const char *hex(T num)
-			{
-				std::stringstream ss;
-				ss << std::hex << num;
-				return ss.str().c_str();
-			}
-	
-			// op to hex
-			constexpr const char *hex()
-			{
-				std::stringstream ss;
-				for(uint16_t i=0;i<op_size;i++) {
-					ss << std::hex << op[i];
-				}
-				return ss.str().c_str();
 			}
 	
 			// check if input is base16

@@ -12,6 +12,8 @@
 
 #include "bigint.h"
 
+// test everything for multiple Bitsizes (different op_size)
+
 using namespace BigInt;
 
 template<uint16_t bitsize>

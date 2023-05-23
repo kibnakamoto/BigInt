@@ -122,15 +122,16 @@ namespace BigInt
 	[[nodiscard("discarded BigUint boolean and operator&&")]]
 	constexpr bool BigUint<bitsize>::operator&&(const BigUint &num)
 	{
-		
-		return 0;
+		if (*this == 0 or num == 0) return 0;
+		return 1;
 	}
 	
 	template<uint16_t bitsize>
 	[[nodiscard("discarded BigUint boolean or operator||")]]
 	constexpr bool BigUint<bitsize>::operator||(const BigUint &num)
 	{
-		return 0;
+		if (*this == 0 and num == 0) return 0;
+		return 1;
 	}
 	
 	template<uint16_t bitsize>
@@ -162,6 +163,8 @@ namespace BigInt
 		}
 		return notzero;
 	}
+
+	// TODO: make sure that all of the following comparision operators work with different op-sizes, they are currently not designed to.
 	
 	// boolean operator, check if not equal to
 	template<uint16_t bitsize>
@@ -245,7 +248,7 @@ namespace BigInt
 		bool greater = 0; // or equal
 	
 		// condition to avoid iterating over non-existing members of op
-		const uint16_t iterator = op_size < num.op_size ? op_size : num.op_size;
+		const uint16_t iterator = op_size < num.op_size ? op_size : num.op_size; // TODO: possibly check if bigger op_size breaks to comparision
 		for(uint16_t i=0;i<iterator;i++) {
 			if(op[i] >= num.op[i]) {
 				greater = 1;
@@ -310,10 +313,18 @@ namespace BigInt
 		// 0x7fffffffffffffffffffffffffffffffU // largest signed 128-bit num
 	    static constexpr const __int128_t int128_max = ((__int128_t)0x7fffffffffffffffU<<64)|0xffffffffffffffffU;
 		
-		// first check if number is bigger
-		if(*this == num) return BigUint<bitsize>(1, 0);
-		//else if(*this < num) 
-		//else 
+		// for efficiency, check each index of op. If any of the indexes are the same, cancel it. Else subtract. Don't compare the whole biginteger at once
+		if(op_size >= num.op_size) { // result is 0 or bigger
+			// do reverse. Like on paper
+			for(uint16_t i=num.op_size;i --> 0;) {
+				
+			}
+		} else { // result requires extra unsigned arithmetic to keep it bigger than 0
+			for(uint16_t i=op_size;i --> 0;) {
+				
+			}
+			
+		}
 		return *this;
 	}
 	#pragma GCC diagnostic pop

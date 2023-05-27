@@ -7,7 +7,8 @@
 #include <iomanip>
 #include <sstream>
 #include <exception>
-#include <bitset>
+#include <array>
+#include <type_traits>
 #include <iostream>
 
 namespace BigInt
@@ -32,7 +33,7 @@ namespace BigInt
 			const constexpr static uint16_t op_size = bitsize%64==0 ? bitsize/64 : bitsize/64+1;
 			uint64_t op[op_size]; // when iterating, start from end to start
 			uint16_t op_nonleading_i; // index of op when leading zeros end
-	
+
 			// get substring of char* - helper function
 			constexpr std::string get_substring(const char* str, uint16_t start, uint16_t substrsize)
 			{
@@ -55,12 +56,20 @@ namespace BigInt
 			BigUint(std::string input);
 			template<uint8_t base=0> // type of input (int = base 10, hex = base 16)
 			BigUint(const char *input);
+
+			// assign uint64_t compile time array to op, there is also a non-garunteed compile time function. That is a constructor
+			template<uint16_t len, std::array<uint64_t, len> tmp_op>
+			consteval BigUint assign_op() noexcept;
+
+			// the next constructor as a compile-time function
+			template<uint16_t count, typename ...Ts>
+			consteval BigUint assign_conste(const __uint128_t &&input1, const Ts&&...input) noexcept; // assign consteval using the same method as the next function
 	
 			// numerical input. If number is 256-bit, input = left 128-bit, right 128-bit
-			constexpr explicit BigUint(const uint16_t count, __uint128_t input, ...);
+			constexpr explicit BigUint(const uint16_t count, __uint128_t input...);
 	
 			// input as operation array
-			explicit BigUint(uint64_t *input, uint16_t len);
+			constexpr explicit BigUint(uint64_t *input, uint16_t len);
 	
 			// decleration
 			inline constexpr BigUint() = default;

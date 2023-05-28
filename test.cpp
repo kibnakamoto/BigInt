@@ -119,10 +119,18 @@ class Test : public BigUint<bitsize>
 			BigUint<bitsize> num = BigUint<bitsize>(1, 256);
 		}
 		
+		// test variadic constructor of type __uint128_t
 		virtual void test_long_int_assignment() {
     		static constexpr const __uint128_t num_long_int = ((__uint128_t)0xabcde0123456789fU<<64)|0xffffffffffffffffU;
     		static constexpr const __uint128_t num_long_int2 = ((__uint128_t)0xffffffffffffffffU<<64)|0xffffffffffffffffU;
 			BigUint<bitsize> num = BigUint<bitsize>(2, num_long_int, num_long_int2);
+		}
+
+		// test consteval of the above function (BigInt::assign_op)
+		virtual void consteval_test_long_int_assignment() {
+			constexpr BigUint<bitsize> num = BigUint<bitsize>().template
+										     assign_conste<__uint128_t>(((__uint128_t)0xabcde0123456789fU<<64)|0xffffffffffffffffU,
+																		((__uint128_t)0xffffffffffffffffU<<64)|0xffffffffffffffffU);
 		}
 
 		/////////// TEST BOOLEAN OPERATORS

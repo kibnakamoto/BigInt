@@ -34,6 +34,11 @@ namespace BigInt
 			uint64_t op[op_size]; // when iterating, start from end to start
 			uint16_t op_nonleading_i; // index of op when leading zeros end
 
+			// uint128_t input to 2 uint64_t integers
+			// constant mask values
+		    static constexpr const __uint128_t bottom_mask_u128 = (__uint128_t{1} << 64) - 1; // 0x0000000000000000ffffffffffffffffU
+	    	static constexpr const __uint128_t top_mask_u128 = ~bottom_mask_u128;                  // 0xffffffffffffffff0000000000000000U
+
 			// get substring of char* - helper function
 			constexpr std::string get_substring(const char* str, uint16_t start, uint16_t substrsize)
 			{
@@ -62,8 +67,9 @@ namespace BigInt
 			consteval BigUint assign_op() noexcept;
 
 			// the next constructor as a compile-time function
-			template<uint16_t count, typename ...Ts>
-			consteval BigUint assign_conste(const __uint128_t &&input1, const Ts&&...input) noexcept; // assign consteval using the same method as the next function
+			template<typename ...Ts>
+			//consteval BigUint assign_conste(const __uint128_t&&input1, Ts&&...input) noexcept; // assign consteval using the same method as the next function
+			consteval BigUint assign_conste(Ts...input) noexcept; // assign consteval using the same method as the next function
 	
 			// numerical input. If number is 256-bit, input = left 128-bit, right 128-bit
 			constexpr explicit BigUint(const uint16_t count, __uint128_t input...);

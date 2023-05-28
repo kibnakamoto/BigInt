@@ -32,14 +32,10 @@ namespace BigInt
 	#pragma GCC diagnostic push
 	#pragma GCC diagnostic ignored "-Wpragmas"
 	#pragma GCC diagnostic ignored "-Wc++2b-extensions"
+	#pragma GCC diagnostic ignored "-Wc++17-extensions"
 	#pragma GCC diagnostic ignored "-Wvarargs"
 	template<uint16_t bitsize> 
 	constexpr BigUint<bitsize>::BigUint(const uint16_t count, __uint128_t ...) {
-	    // uint128_t input to 2 uint64_t integers
-		// constant mask values
-	    static constexpr const __uint128_t bottom_mask = (__uint128_t{1} << 64) - 1; // 0x0000000000000000ffffffffffffffffU
-	    static constexpr const __uint128_t top_mask = ~bottom_mask;                  // 0xffffffffffffffff0000000000000000U
-
 		std::va_list args;
 		va_start(args, count);
 	
@@ -51,31 +47,32 @@ namespace BigInt
 		// add the inputs to the operator array
 	    for(size_t i=0;i<count;i++) {
 	        __uint128_t num = va_arg(args, __uint128_t);
-	        op[op_size-i*2-1] = num&bottom_mask;
-	        op[op_size-i*2-2] = (num>>64)&top_mask;
+	        op[op_size-i*2-1] = num&bottom_mask_u128;
+	        op[op_size-i*2-2] = (num>>64)&top_mask_u128;
 	    }
 		va_end(args);
 	}
 
 	// numerical input. If number is 256-bit, input = left 128-bit, right 128-bit, same as the function above except it's compile-time
-	template<uint16_t bitsize> 
-	template<uint16_t count, typename ...Ts>
-	consteval BigUint<bitsize> BigUint<bitsize>::assign_conste(const __uint128_t&& input1, const Ts&&... input) noexcept {
-	    // uint128_t input to 2 uint64_t integers
-		// constant mask values
-	    static constexpr const __uint128_t bottom_mask = (__uint128_t{1} << 64) - 1; // 0x0000000000000000ffffffffffffffffU
-	    static constexpr const __uint128_t top_mask = ~bottom_mask;                  // 0xffffffffffffffff0000000000000000U
-	
+	template<uint16_t bitsize>
+	template<typename ...Ts> // all uint128_t, must specify
+	consteval BigUint<bitsize> BigUint<bitsize>::assign_conste(Ts... input) noexcept
+	{
 		// pad the operator array
-		const uint16_t count64 = count << 1; // count if input is 64-bits
-		op_nonleading_i = count64 < op_size? op_size-count64 : 0;
+		constexpr const size_t count = sizeof...(Ts);
+		const constexpr uint16_t count64 = count << 1; // count if input is 64-bits
+		if constexpr(count64 < op_size)
+				op_nonleading_i = op_size-count64;
+		else
+			op_nonleading_i = 0;
 		for(uint16_t i=0;i<=op_nonleading_i;i++) op[i] = 0x0000000000000000ULL;
 	
 		// add the inputs to the operator array
-	    for(size_t i=0;i<count;i++) {
-	        __uint128_t num = input1;
-	        op[op_size-i*2-1] = num&bottom_mask;
-	        op[op_size-i*2-2] = (num>>64)&top_mask;
+		uint16_t i=0;
+	    for(const auto num : {input...}) {
+	        op[op_size-i*2-1] = num&bottom_mask_u128;
+	        op[op_size-i*2-2] = (num>>64)&top_mask_u128;
+			i++;
 	    }
 		return *this;
 	}
@@ -239,8 +236,6 @@ namespace BigInt
 		return notzero;
 	}
 
-	// TODO: make sure that all of the following comparision operators work with different op-sizes, they are currently not designed to.
-	
 	// boolean operator, check if not equal to
 	#pragma GCC diagnostic push
 	#pragma GCC diagnostic ignored "-Wc++17-extensions"
@@ -259,6 +254,8 @@ namespace BigInt
 		return notequal;
 	}
 	#pragma GCC diagnostic pop
+
+	// TODO: make sure that all of the following comparision operators work with different op-sizes, they are currently not designed to.
 	
 	template<uint16_t bitsize>
 	[[nodiscard("discarded BigUint boolean less than operator<")]]
@@ -381,6 +378,7 @@ namespace BigInt
 		return BigUint<bitsize>(new_op, op_size);
 	}
 
+	// TODO: does it make sense to assign ret length to op_size if bigger and num.op_size if smaller? Shouldn't ret length just be op_size no matter what. 
 	#pragma GCC diagnostic push
 	#pragma GCC diagnostic ignored "-Wpragmas"
 	#pragma GCC diagnostic ignored "-Wc++2b-extensions" // for some reason raises -Wpragmas because warning not found while it surpresses the warning at the same time
@@ -408,9 +406,8 @@ namespace BigInt
 				
 			}
 			
-			// return ret;
+			return BigUint<bitsize>(ret, num.op_size);
 		}
-		return *this;
 	}
 	#pragma GCC diagnostic pop
 };

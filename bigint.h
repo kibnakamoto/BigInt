@@ -78,7 +78,7 @@ namespace BigInt
 			constexpr explicit BigUint(uint64_t *input, uint16_t len);
 	
 			// decleration
-			inline constexpr BigUint() = default;
+			inline constexpr BigUint() noexcept = default;
 	
 			// assign uint256 to another uint256
 			//BigUint operator=(const BigUint &num);

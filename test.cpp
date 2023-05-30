@@ -114,7 +114,7 @@ class Test : public BigUint<bitsize>
 			BigUint<bitsize> num2 = "0xaTf";
 		}
 
-		/////////// TEST STRING AND CHAR ASSIGNMENT OPERATORS (INT, HEX)
+		/////////// TEST STRING AND CHAR ASSIGNMENT OPERATORS (INT (amount of variadic parameters), INT)
 		virtual void test_int_assignment() {
 			BigUint<bitsize> num = BigUint<bitsize>(1, 256);
 		}
@@ -126,12 +126,14 @@ class Test : public BigUint<bitsize>
 			BigUint<bitsize> num = BigUint<bitsize>(2, num_long_int, num_long_int2);
 		}
 
-		// test consteval of the above function (BigInt::assign_op)
+		// test consteval of the above function (bigint::assign_conste)
 		virtual void consteval_test_long_int_assignment() {
 			constexpr BigUint<bitsize> num = BigUint<bitsize>().template
-										     assign_conste<__uint128_t>(((__uint128_t)0xabcde0123456789fU<<64)|0xffffffffffffffffU,
-																		((__uint128_t)0xffffffffffffffffU<<64)|0xffffffffffffffffU);
+										     assign_conste<__uint128_t>(((__uint128_t)0xabcde0123456789fu<<64)|0xffffffffffffffffu,
+																		((__uint128_t)0xffffffffffffffffu<<64)|0xffffffffffffffffu);
 		}
+
+		// TODO: make uint64_t * constructor + assign_op
 
 		/////////// TEST BOOLEAN OPERATORS
 		virtual bool test_bool_not_equal() {
@@ -191,7 +193,7 @@ class Benchmark : public Test<bitsize>
 {
 	public:
 	// assignment operators (11 functions)
-	// test_chararr_assignment, test_str_assignment, test_long_chararr_assignment, test_long_str_assignment, test_long_hex_assignment, test_long_nonint_assignment, test_long_nonhex_assignment, test_nonint_assignment, test_nonhex_assignment, test_int_assignment, test_long_int_assignment, 
+	// test_chararr_assignment, test_str_assignment, test_long_chararr_assignment, test_long_str_assignment, test_long_hex_assignment, test_long_nonint_assignment, test_long_nonhex_assignment, test_nonint_assignment, test_nonhex_assignment, test_int_assignment, test_long_int_assignment,  consteval_test_long_int_assignment
 
 	// boolean operators (4 functions)
 	// test_bool_not_equal, test_bool_not_equal_equal, test_bool_not, test_bool_not0

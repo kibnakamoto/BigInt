@@ -387,10 +387,6 @@ namespace BigInt
 	[[nodiscard("discarded BigUint operator-")]]
 	constexpr BigUint<bitsize> BigUint<bitsize>::operator-(const BigUint &num)
 	{
-		// 0x7fffffffffffffffffffffffffffffffU // largest signed 128-bit num
-	    static constexpr const __int128_t int128_max = ((__int128_t)0x7fffffffffffffffU<<64)|0xffffffffffffffffU;
-		
-		// for efficiency, check each index of op. If any of the indexes are the same, cancel it. Else subtract. Don't compare the whole biginteger at once
 		if constexpr(op_size >= num.op_size) { // result is bigger than num, default condition, if removed
 			uint64_t ret[op_size]; // make sure to assign the biggest data size in the subtraction so that there is less chance of a value being sent to the void
 			for(uint16_t i=0;i<num.op_size;i++) { // cover 0 to num.op_size (smaller)
@@ -406,7 +402,7 @@ namespace BigInt
 				}
 			}
 			return BigUint<bitsize>(ret, op_size);
-		} else { // result requires extra unsigned arithmetic to keep it bigger than 0
+		} else {
 			uint64_t ret[num.op_size];
 			for(uint16_t i=0;i<op_size;i++) {
 				if (op[i] < num.op[i]) {
@@ -424,6 +420,6 @@ namespace BigInt
 		}
 	}
 	#pragma GCC diagnostic pop
-};
+}; /* NAMESPACE BIGINT */
 
 #endif /* BIGINT_CPP */

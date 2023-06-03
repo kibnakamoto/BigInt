@@ -368,13 +368,13 @@ namespace BigInt
 		}
 	
 		// testing
-		std::cout << std::endl << "new_op:\t";
-		for(uint16_t i=0;i<op_size;i++) {
-			std::cout << new_op[i] << "";
-		}
-		std::cout << std::endl << "answer: " << "466ec2d066aa408cc068b0668e810922b282eca6822604f1263248acc2";
+		// std::cout << std::endl << "new_op:\t";
+		// for(uint16_t i=0;i<op_size;i++) {
+		// 	std::cout << new_op[i] << "";
+		// }
+		// std::cout << std::endl << "answer: " << "466ec2d066aa408cc068b0668e810922b282eca6822604f1263248acc2";
 	
-		std::cout << std::endl << "returned" << std::endl;
+		// std::cout << std::endl << "returned" << std::endl;
 		return BigUint<bitsize>(new_op, op_size);
 	}
 

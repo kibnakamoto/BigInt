@@ -125,25 +125,25 @@ namespace BigInt
 			// delete operators for deleting run-time objects
 			inline void operator delete(void *dat); // delete object itself
 	
-			inline constexpr operator uint64_t*() const noexcept { return op; }
+			inline constexpr operator uint64_t*() noexcept { return op; }
 
 			// convert between different bigints
 			template<uint16_t n> // bitsize
-			inline constexpr operator BigUint()
+			inline constexpr BigUint<n> to()
 			{
 				const constexpr uint16_t new_op_size = n%64==0 ? n/64 : n/64+1;
 				uint64_t num[new_op_size];
-				if constexpr(new_op_size <= op_size) {
+				if constexpr(new_op_size <= op_size) { // when converting to a smaller type
 					const constexpr uint16_t diff = op_size-new_op_size;
-					for(uint16_t i=new_op_size;i --> 0;) num[i] = op[i+diff];
-				} else {
+					for(uint16_t i=new_op_size;i --> 0;) num[i] = op[i+diff]; // smallest numbers of op will be dismissed, the major segment numbers will be in num
+				} else { // when converting to a bigger type
 					const constexpr uint16_t diff = new_op_size-op_size;
 					for(uint16_t i=op_size;i --> 0;) num[i+diff] = op[i];
-					for(uint16_t i=0;i<diff;i++) {
+					for(uint16_t i=0;i<diff;i++) { // pad
 						num[i] = 0;
 					}
 				}
-				return BigUint(num, new_op_size);
+				return BigUint<n>(num, new_op_size);
 			}
 	
 			template<uint16_t n> friend std::ostream& operator<<(std::ostream& cout, BigUint<n> toprint);

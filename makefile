@@ -13,10 +13,10 @@ TEST ?= test.cpp
 TEST_CXXFLAGS ?= -g -std=c++2b
 TEST_EXEC ?= test
 
-${EXEC}: ${BIGINT_CPP}
+${EXEC}: ${BIGINT}
 	${CXX} ${CXXFLAGS} ${CPP} -o ${EXEC}
 
-${TEST_EXEC}: ${TEST}
+${TEST_EXEC}: ${TEST} ${BIGINT}
 	${CXX} ${CXXFLAGS} -c ${BIGINT_CPP} -o ${BIGINT_OBJ}
 	${CXX} ${TEST_CXXFLAGS} -c ${TEST} -o ${TEST_OBJ}
 	${CXX} bigint.o test.o -o ${TEST_EXEC}

@@ -15,10 +15,10 @@ int main()
 	std::cout << "int num: " << num;
 	std::cout << "\nhex num2: " << std::hex << num2;
 	auto num3 = num + num2;
-	uint256_t num4 = std::string("134395843534503845740957390690572"); // 232-bit hex
+	uint192_t num4 = std::string("134395843534503845740957390690572"); // 232-bit hex
 	std::cout << "\nnum+num2: " << std::hex << num3 << std::endl;
 	std::cout << "\nhex num4: " << std::hex << num4;
-	std::cout << "\nnum - num4: " << (num4-num);
+	std::cout << "\nnum - num4: " << (num4.to<256>()-num);
 	std::cout << std::endl;
 	return 0;
 }

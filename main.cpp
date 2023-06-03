@@ -10,10 +10,8 @@ int main()
 {
 	// uint256_t num="256";
 	// uint256_t num2 = std::string("256");
-	std::cout << std::endl << (uint64_t)0-(uint64_t)10 << std::endl;
-	throw 1;
 	uint256_t num="2337616833552046603458334740849159417653411302789319245661"; // 232-bit hex
-	uint256_t num2 = std::string("2337616833552046603458334740849159417653411302789319245661"); // 232-bit hex
+	uint256_t num2 = std::string("2337616833552046603458334740849159417653411302789319245660"); // 232-bit hex
 	// constexpr uint256_t num3 = BigUint<256><1>(256);
 	std::cout << "int num: " << num;
 	std::cout << "\nhex num2: " << std::hex << num2;

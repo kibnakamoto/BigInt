@@ -395,14 +395,14 @@ namespace BigInt
 			uint64_t ret[op_size]; // make sure to assign the biggest data size in the subtraction so that there is less chance of a value being sent to the void
 			for(uint16_t i=0;i<num.op_size;i++) { // cover 0 to num.op_size (smaller)
 				if (op[i] < num.op[i]) {
-					ret[op_size-i-1] = (UINT64_MAX - num.op[i]) + op[i];
+					ret[i] = (UINT64_MAX - num.op[i]) + op[i];
 				} else {
-					ret[op_size-i-1] = op[i] - num.op[i];
+					ret[i] = op[i] - num.op[i];
 				}
 			}
 			if constexpr(op_size != num.op_size) {
 				for(uint64_t i=num.op_size;i<op_size;i++) {
-					ret[op_size-i-1] = op[i];
+					ret[i] = op[i];
 				}
 			}
 			return BigUint<bitsize>(ret, op_size);
@@ -410,14 +410,14 @@ namespace BigInt
 			uint64_t ret[num.op_size];
 			for(uint16_t i=0;i<op_size;i++) {
 				if (op[i] < num.op[i]) {
-					ret[op_size-i-1] = (UINT64_MAX - num.op[i]) + op[i];
+					ret[i] = (UINT64_MAX - num.op[i]) + op[i];
 				} else {
-					ret[op_size-i-1] = op[i] - num.op[i];
+					ret[i] = op[i] - num.op[i];
 				}
 				
 			}
 			for(uint64_t i=op_size;i<num.op_size;i++) {
-				ret[op_size-i-1] = UINT64_MAX-num.op[i];
+				ret[i] = UINT64_MAX-num.op[i];
 			}
 			
 			return BigUint<bitsize>(ret, num.op_size);

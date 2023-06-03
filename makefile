@@ -24,7 +24,7 @@ ${TEST_EXEC}: ${TEST} ${BIGINT}
 clean:
 	rm -rf ${EXEC} ${TEST_EXEC} ${OBJ}
 
-all:
+all: ${BIGINT} ${TEST}
 	${CXX} ${CXXFLAGS} ${CPP} -o ${EXEC}
 	${CXX} ${CXXFLAGS} -c ${BIGINT_CPP} -o ${BIGINT_OBJ}
 	${CXX} ${TEST_CXXFLAGS} -c ${TEST} -o ${TEST_OBJ}

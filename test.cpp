@@ -185,6 +185,18 @@ class Test : public BigUint<bitsize>
 			std::cout << std::endl << "the correct answer: 466ec2d066aa408cc068b0668e810922b282eca6822604f1263248acc2";
 			return optostr(num3.__get_op()) == "466ec2d066aa408cc068b0668e810922b282eca6822604f1263248acc2";
 		}
+
+		virtual bool test_subtraction() {
+			// python3	SUBTRACTION TEST, CORRECT for all cases:
+			/// hex(0x134395843534503845740957390690572-0x2337616833552046603458334740849159417653411302789319245661 + (1 << 256))
+			///'0xffffffdcc89e97ccaadfb99fcba7ccb9f3b4c6ea11ceb043443e1ce07744af11'
+			BigUint<bitsize> num="134395843534503845740957390690572"; // 132-bit hex
+			BigUint<bitsize> num2 = std::string("2337616833552046603458334740849159417653411302789319245661"); // 232-bit hex
+			BigUint<bitsize> num3 = num - num2;
+			std::cout << std::hex << std::endl << "			   output: " << num3;
+			std::cout << std::endl << "the correct answer: 466ec2d066aa408cc068b0668e810922b282eca6822604f1263248acc2";
+			return optostr(num3.__get_op()) == "466ec2d066aa408cc068b0668e810922b282eca6822604f1263248acc2";
+		}
 };
 
 // Benchmark test speed of Bigints
@@ -198,7 +210,8 @@ class Benchmark : public Test<bitsize>
 	// boolean operators (4 functions)
 	// test_bool_not_equal, test_bool_not_equal_equal, test_bool_not, test_bool_not0
 
-	// basic arithmetic (1 functions)
+	// basic arithmetic (2 functions)
+	// test_addition, test_subtraction
 	bool test_addition() { return 0; }
 };
 

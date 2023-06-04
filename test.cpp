@@ -210,6 +210,9 @@ class Benchmark : public Test<bitsize>
 	// boolean operators (4 functions)
 	// test_bool_not_equal, test_bool_not_equal_equal, test_bool_not, test_bool_not0
 
+	// bitwise operators (1 functions)
+	// test_bitwise_not
+
 	// basic arithmetic (2 functions)
 	// test_addition, test_subtraction
 	bool test_addition() { return 0; }

@@ -20,6 +20,7 @@ int main()
 	std::cout << "\nhex num4: " << std::hex << num4;
 
 	std::cout << "\nnum - num4: " << (num4.to<256>()-num);
+	std::cout << "\n~num: " << ~num;
 	std::cout << std::endl;
 	return 0;
 }

@@ -10,7 +10,7 @@
 
 #include "bigint.h"
 
-// make every 100% compile time calculations and functions consteval
+// NOTE: all operators work for the same op size. Maybe remove the conditions that define it otherwise
 
 namespace BigInt
 {
@@ -378,7 +378,6 @@ namespace BigInt
 		return BigUint<bitsize>(new_op, op_size);
 	}
 
-	// TODO: does it make sense to assign ret length to op_size if bigger and num.op_size if smaller? Shouldn't ret length just be op_size no matter what. 
 	#pragma GCC diagnostic push
 	#pragma GCC diagnostic ignored "-Wpragmas"
 	#pragma GCC diagnostic ignored "-Wc++2b-extensions" // for some reason raises -Wpragmas because warning not found while it surpresses the warning at the same time
@@ -420,6 +419,126 @@ namespace BigInt
 		}
 	}
 	#pragma GCC diagnostic pop
+
+	// TODO: define all bitwise operators
+
+	template<uint16_t bitsize>
+	[[nodiscard("discarded BigUint operator~")]]
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator~() const
+	{
+		uint64_t ret[op_size];
+		for(uint16_t i=0;i<op_size;i++)  ret[i] = ~op[i];
+		return BigUint<bitsize>(ret, op_size);
+	}
+
+	// TODO: do shifting by 64 and assign a value to 0/f..., then go on to the next op value. Then once all
+	// 		 shifting counts are smaller than 64, then shift accordingly
+	// constexpr BigUint operator>>(const BigUint &num);
+	// constexpr BigUint operator>>=(const BigUint &num);
+	// constexpr BigUint operator<<(const BigUint &num);
+	// constexpr BigUint operator<<=(const BigUint &num);
+	// constexpr BigUint operator>>(const uint64_t &num);
+	// constexpr BigUint operator>>=(const uint64_t &num);
+	// constexpr BigUint operator<<(const uint64_t &num);
+	// constexpr BigUint operator<<=(const uint64_t &num);
+
+	template<uint16_t bitsize>
+	[[nodiscard("discarded BigUint operator&")]]
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator&(const BigUint &num)
+	{
+		uint64_t ret[op_size];
+		for(uint16_t i=0;i<op_size;i++)  ret[i] = op[i] & num.op[i];
+		return BigUint<bitsize>(ret, op_size);
+	}
+
+	template<uint16_t bitsize>
+	[[nodiscard("discarded BigUint operator&=")]]
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator&=(const BigUint &num)
+	{
+		// assuming they are the same size. Which should be enforced by compiler by default
+		for(uint16_t i=0;i<op_size;i++)  op[i] &= num.op[i];
+		return *this;
+	}
+
+	template<uint16_t bitsize>
+	[[nodiscard("discarded BigUint operator^")]]
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator^(const BigUint &num)
+	{
+		// assuming they are the same size. Which should be enforced by compiler by default
+		uint64_t ret[op_size];
+		for(uint16_t i=0;i<op_size;i++)  ret[i] = op[i] ^ num.op[i];
+		return BigUint<bitsize>(ret, op_size);
+	}
+
+	template<uint16_t bitsize>
+	[[nodiscard("discarded BigUint operator^=")]]
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator^=(const BigUint &num)
+	{
+		// assuming they are the same size. Which should be enforced by compiler by default
+		for(uint16_t i=0;i<op_size;i++)  op[i] ^= num.op[i];
+		return *this;
+	}
+
+	/* TODO: DEFINE THE FOLLOWING SHIFT FUNCTIONS */
+
+	template<uint16_t bitsize>
+	[[nodiscard("discarded BigUint operator>>")]]
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator>>(const BigUint &num)
+	{
+		// assuming they are the same size. Which should be enforced by compiler by default
+		uint64_t ret[op_size];
+		for(uint16_t i=0;i<op_size;i++)  ret[i] = op[i] ^ num.op[i];
+		return BigUint<bitsize>(ret, op_size);
+	}
+
+	template<uint16_t bitsize>
+	[[nodiscard("discarded BigUint operator>>=")]]
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator>>=(const BigUint &num)
+	{
+		// assuming they are the same size. Which should be enforced by compiler by default
+		for(uint16_t i=0;i<op_size;i++)  op[i] &= num.op[i];
+		return *this;
+	}
+
+	template<uint16_t bitsize>
+	[[nodiscard("discarded BigUint operator<<")]]
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator<<(const BigUint &num)
+	{
+		// assuming they are the same size. Which should be enforced by compiler by default
+		uint64_t ret[op_size];
+		for(uint16_t i=0;i<op_size;i++)  ret[i] = op[i] ^ num.op[i];
+		return BigUint<bitsize>(ret, op_size);
+	}
+
+	template<uint16_t bitsize>
+	[[nodiscard("discarded BigUint operator<<=")]]
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator<<=(const BigUint &num)
+	{
+		// assuming they are the same size. Which should be enforced by compiler by default
+		for(uint16_t i=0;i<op_size;i++)  op[i] &= num.op[i];
+		return *this;
+	}
+
+	/* TODO: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ */
+
+	template<uint16_t bitsize>
+	[[nodiscard("discarded BigUint operator|")]]
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator|(const BigUint &num)
+	{
+		// assuming they are the same size. Which should be enforced by compiler by default
+		uint64_t ret[op_size];
+		for(uint16_t i=0;i<op_size;i++)  ret[i] = op[i] | num.op[i];
+		return BigUint<bitsize>(ret, op_size);
+	}
+
+	template<uint16_t bitsize>
+	[[nodiscard("discarded BigUint operator|=")]]
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator|=(const BigUint &num)
+	{
+		// assuming they are the same size. Which should be enforced by compiler by default
+		for(uint16_t i=0;i<op_size;i++)  op[i] |= num.op[i];
+		return *this;
+	}
 }; /* NAMESPACE BIGINT */
 
 #endif /* BIGINT_CPP */

@@ -21,6 +21,7 @@ int main()
 
 	std::cout << "\nnum - num4: " << (num4.to<256>()-num);
 	std::cout << "\n~num: " << ~num;
+	std::cout << "\nnum << 20: " << (num << 20);
 	std::cout << std::endl;
 	return 0;
 }

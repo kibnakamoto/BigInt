@@ -425,8 +425,19 @@ namespace BigInt
 	constexpr BigUint<bitsize> BigUint<bitsize>::operator*(const BigUint &num)
 	{
 		uint64_t ret[op_size];
+		for(uint16_t i=0;i<op_size;i++) {
+			// Russian peasant algorithm
+			ret[i] = 0;
+			while(num.op[i] > 0)
+			{
+				if (num.op[i] & 1) ret[i] = ret[i] + op[i];
+			}
+		}
+		// https://www.geeksforgeeks.org/russian-peasant-multiply-two-numbers-using-bitwise-operators/
 		return BigUint<bitsize>(ret, op_size);
 	}
+	// TODO: bug on left shift. convert to uint128_t first, because shift by 63 doesn't mean shift the op[i] by 63, if it overflows, then what?
+	// shift operators have the problem of shifting only a segment of 64-bits. You need to shift all. shift 2 bits, then move all the data by 2 bits.
 
 	template<uint16_t bitsize>
 	[[nodiscard("discarded BigUint operator++")]]
@@ -525,83 +536,10 @@ namespace BigInt
 
 	template<uint16_t bitsize>
 	[[nodiscard("discarded BigUint operator>>")]]
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator>>(BigUint num)
-	{
-		// assuming they are the same size. Which should be enforced by compiler by default
-		uint64_t ret[op_size];
-		for(uint16_t i=0;i<op_size;i++) {
-			if(num < 64) {
-				ret[i] = op[i] >> num;
-				break;
-			} else {
-				ret[i] = 0;
-				num-=64;
-			}
-		}
-		return BigUint<bitsize>(ret, op_size);
-	}
-
-	template<uint16_t bitsize>
-	[[nodiscard("discarded BigUint operator>>=")]]
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator>>=(BigUint num)
-	{
-		// assuming they are the same size. Which should be enforced by compiler by default
-		for(uint16_t i=0;i<op_size;i++) {
-			if(num < 64) {
-				op[i] >>= num;
-				break;
-			} else {
-				op[i] = 0;
-				num-=64;
-			}
-		}
-		// assuming they are the same size. Which should be enforced by compiler by default
-		return *this;
-	}
-
-	template<uint16_t bitsize>
-	[[nodiscard("discarded BigUint operator<<")]]
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator<<(BigUint num)
-	{
-		// assuming they are the same size. Which should be enforced by compiler by default
-		uint64_t ret[op_size];
-		for(uint16_t i=op_size;i --> 0;) {
-			if(num < 64) {
-				ret[i] = op[i] << num;
-				break;
-			} else {
-				ret[i] = UINT64_MAX;
-				num-=64;
-			}
-		}
-		return BigUint<bitsize>(ret, op_size);
-	}
-
-	template<uint16_t bitsize>
-	[[nodiscard("discarded BigUint operator<<=")]]
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator<<=(BigUint num)
-	{
-		// assuming they are the same size. Which should be enforced by compiler by default
-		for(uint16_t i=op_size;i --> 0;) {
-			if(num < 64) {
-				op[i] <<= num;
-				break;
-			} else {
-				op[i] = UINT64_MAX;
-				num-=64;
-			}
-		}
-		return *this;
-	}
-
-	template<uint16_t bitsize>
-	[[nodiscard("discarded BigUint operator>>")]]
 	constexpr BigUint<bitsize> BigUint<bitsize>::operator>>(const uint64_t &num)
 	{
-		// assuming they are the same size. Which should be enforced by compiler by default
 		uint64_t ret[op_size];
-		ret[0] = op[0] >> num;
-		for(uint16_t i=1;i<op_size;i++) ret[i] = op[i];
+		for(uint16_t i=0;i<op_size;i++) ret[i] = op[i] << num;
 		return BigUint<bitsize>(ret, op_size);
 	}
 
@@ -609,8 +547,7 @@ namespace BigInt
 	[[nodiscard("discarded BigUint operator>>=")]]
 	constexpr BigUint<bitsize> BigUint<bitsize>::operator>>=(const uint64_t &num)
 	{
-		// assuming they are the same size. Which should be enforced by compiler by default
-		op[0] >>= num;
+		for(uint16_t i=0;i<op_size;i++) op[i] >>= num;
 		return *this;
 	}
 
@@ -618,11 +555,8 @@ namespace BigInt
 	[[nodiscard("discarded BigUint operator<<")]]
 	constexpr BigUint<bitsize> BigUint<bitsize>::operator<<(const uint64_t &num)
 	{
-		// assuming they are the same size. Which should be enforced by compiler by default
 		uint64_t ret[op_size];
-		const constexpr uint16_t index = op-size-1;
-		ret[index] = op[index] >> num;
-		for(uint16_t i=index;i --> 0;) ret[i] = op[i];
+		for(uint16_t i=0;i<op_size;i++) ret[i] = op[i] << num;
 		return BigUint<bitsize>(ret, op_size);
 	}
 
@@ -630,8 +564,7 @@ namespace BigInt
 	[[nodiscard("discarded BigUint operator<<=")]]
 	constexpr BigUint<bitsize> BigUint<bitsize>::operator<<=(const uint64_t &num)
 	{
-		// assuming they are the same size. Which should be enforced by compiler by default
-		op[op-size-1] <<= num;
+		for(uint16_t i=0;i<op_size;i++) op[i] <<= num;
 		return *this;
 	}
 

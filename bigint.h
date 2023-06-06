@@ -76,6 +76,11 @@ namespace BigInt
 	
 			// numerical input. If number is 256-bit, input = left 128-bit, right 128-bit
 			constexpr explicit BigUint(const uint16_t count, __uint128_t input...);
+
+			constexpr BigUint(const uint64_t num) {
+				for(uint16_t i=0;i<op_size-1;i++) op[i] = 0;
+				op[op_size-1] = num;
+			}
 	
 			// input as operation array
 			constexpr explicit BigUint(uint64_t *input, uint16_t len);
@@ -123,10 +128,6 @@ namespace BigInt
 			constexpr BigUint operator&=(const BigUint &num);
 			constexpr BigUint operator^(const BigUint &num);
 			constexpr BigUint operator^=(const BigUint &num);
-			constexpr BigUint operator>>(BigUint num);
-			constexpr BigUint operator>>=(BigUint num);
-			constexpr BigUint operator<<(BigUint num);
-			constexpr BigUint operator<<=(BigUint num);
 			constexpr BigUint operator>>(const uint64_t &num);
 			constexpr BigUint operator>>=(const uint64_t &num);
 			constexpr BigUint operator<<(const uint64_t &num);

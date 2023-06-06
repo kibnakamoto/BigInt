@@ -128,10 +128,10 @@ namespace BigInt
 			constexpr BigUint operator&=(const BigUint &num);
 			constexpr BigUint operator^(const BigUint &num);
 			constexpr BigUint operator^=(const BigUint &num);
-			constexpr BigUint operator>>(const uint64_t &num);
-			constexpr BigUint operator>>=(const uint64_t &num);
-			constexpr BigUint operator<<(const uint64_t &num);
-			constexpr BigUint operator<<=(const uint64_t &num);
+			constexpr BigUint operator>>(const uint16_t &num); // doesn't need to be BigInt because it'll be too large if bigint
+			constexpr BigUint operator>>=(const uint16_t &num); // uint16 because it is bit-size, and bitsize var is uint16
+			constexpr BigUint operator<<(const uint16_t &num);
+			constexpr BigUint operator<<=(const uint16_t &num);
 			constexpr BigUint operator|(const BigUint &num);
 			constexpr BigUint operator|=(const BigUint &num);
 	
@@ -150,6 +150,33 @@ namespace BigInt
 			inline void operator delete(void *dat); // delete object itself
 	
 			inline constexpr operator uint64_t*() noexcept { return op; }
+
+			constexpr operator uint64_t() noexcept {
+				for(uint16_t i=0;i<op_size;i++) {
+					if(op[i] != 0) return op[i];
+				}
+				return op[0];
+			}
+
+			constexpr operator uint32_t() noexcept {
+				for(uint16_t i=0;i<op_size;i++) {
+					if(op[i] != 0) return op[i];
+				}
+				return op[0];
+			}
+
+			constexpr operator uint16_t() noexcept {
+				for(uint16_t i=0;i<op_size;i++) {
+					if(op[i] != 0) return op[i];
+				}
+				return op[0];
+			}
+			constexpr operator uint8_t() noexcept {
+				for(uint16_t i=0;i<op_size;i++) {
+					if(op[i] != 0) return op[i];
+				}
+				return op[0];
+			}
 
 			// convert between different bigints
 			template<uint16_t n> // bitsize

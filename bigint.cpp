@@ -536,7 +536,7 @@ namespace BigInt
 
 	template<uint16_t bitsize>
 	[[nodiscard("discarded BigUint operator>>")]]
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator>>(const uint64_t &num)
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator>>(const uint16_t &num)
 	{
 		uint64_t ret[op_size];
 		for(uint16_t i=0;i<op_size;i++) ret[i] = op[i] << num;
@@ -545,7 +545,7 @@ namespace BigInt
 
 	template<uint16_t bitsize>
 	[[nodiscard("discarded BigUint operator>>=")]]
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator>>=(const uint64_t &num)
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator>>=(const uint16_t &num)
 	{
 		for(uint16_t i=0;i<op_size;i++) op[i] >>= num;
 		return *this;
@@ -553,7 +553,7 @@ namespace BigInt
 
 	template<uint16_t bitsize>
 	[[nodiscard("discarded BigUint operator<<")]]
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator<<(const uint64_t &num)
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator<<(const uint16_t &num)
 	{
 		uint64_t ret[op_size];
 		for(uint16_t i=0;i<op_size;i++) ret[i] = op[i] << num;
@@ -562,7 +562,7 @@ namespace BigInt
 
 	template<uint16_t bitsize>
 	[[nodiscard("discarded BigUint operator<<=")]]
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator<<=(const uint64_t &num)
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator<<=(const uint16_t &num)
 	{
 		for(uint16_t i=0;i<op_size;i++) op[i] <<= num;
 		return *this;

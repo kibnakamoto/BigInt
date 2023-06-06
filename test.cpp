@@ -210,11 +210,13 @@ class Benchmark : public Test<bitsize>
 	// boolean operators (4 functions)
 	// test_bool_not_equal, test_bool_not_equal_equal, test_bool_not, test_bool_not0
 
-	// bitwise operators (1 functions)
-	// test_bitwise_not
+	// bitwise operators (15 functions)
+	// test_bitwise_not, bitwise_and, bitwise_and_eq, bitwise_xor, bitwise_xor_eq, bitwise_rshift_big,
+	// bitwise_rshift_eq_big, bitwise_lshift_big, bitwise_lshift_eq_big, bitwise_rshift_uint64,
+	// bitwise_rshift_eq_uint64, bitwise_lshift_uint64, bitwise_lshift_eq_uint64, bitwise_or, bitwise_or_eq
 
-	// basic arithmetic (2 functions)
-	// test_addition, test_subtraction
+	// basic arithmetic (3 functions)
+	// test_addition, test_subtraction_big, test_subtraction_uint64
 	bool test_addition() { return 0; }
 };
 

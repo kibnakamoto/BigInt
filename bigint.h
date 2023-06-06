@@ -98,6 +98,8 @@ namespace BigInt
 			constexpr BigUint operator/=(const BigUint &num);
 			constexpr BigUint operator%(const BigUint &num);
 			constexpr BigUint operator%=(const BigUint &num);
+			constexpr BigUint operator-(const uint64_t &num);
+			constexpr BigUint operator-=(const uint64_t &num);
 			constexpr BigUint operator%(const uint64_t &num);
 			constexpr BigUint operator%=(const uint64_t &num);
 			constexpr BigUint operator++();

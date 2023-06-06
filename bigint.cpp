@@ -420,7 +420,62 @@ namespace BigInt
 	}
 	#pragma GCC diagnostic pop
 
-	// TODO: define all bitwise operators
+	template<uint16_t bitsize>
+	[[nodiscard("discarded BigUint operator*")]]
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator*(const BigUint &num)
+	{
+		uint64_t ret[op_size];
+		return BigUint<bitsize>(ret, op_size);
+	}
+
+	template<uint16_t bitsize>
+	[[nodiscard("discarded BigUint operator++")]]
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator++()
+	{
+		for(uint16_t i=op_size;i --> 0;) {
+			if(op[i] != UINT64_MAX) op[i]++;
+			else {
+				if(i != 0) continue;
+				else {
+					for(uint16_t j=0;j<op_size;j++) op[j] = 0x0000000000000000ULL;
+					break;
+				}
+			}
+		}
+		return *this;
+	}
+
+	template<uint16_t bitsize>
+	[[nodiscard("discarded BigUint operator--")]]
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator--()
+	{
+		for(uint16_t i=0;i<op_size;i++) {
+			if(op[i] != 0) op[i]--;
+			else {
+				if(i != op_size-1) continue;
+				else {
+					for(uint16_t j=0;j<op_size;j++) op[j] = 0xffffffffffffffffULL;
+					break;
+				}
+			}
+		}
+		return *this;
+	}
+
+	template<uint16_t bitsize>
+	[[nodiscard("discarded BigUint operator[] for accessing bit")]]
+	constexpr bool BigUint<bitsize>::operator[](const uint32_t &index) const
+	{
+		const uint64_t mod = index%64;
+		return op[!mod ? index/64 : index/64+1] & (1 << mod);
+	}
+
+	template<uint16_t bitsize>
+	[[nodiscard("discarded BigUint operator[] for accessing 64-bits")]]
+	constexpr uint64_t BigUint<bitsize>::operator[](const uint16_t &index) const
+	{
+		return op[index];
+	}
 
 	template<uint16_t bitsize>
 	[[nodiscard("discarded BigUint operator~")]]
@@ -430,13 +485,6 @@ namespace BigInt
 		for(uint16_t i=0;i<op_size;i++)  ret[i] = ~op[i];
 		return BigUint<bitsize>(ret, op_size);
 	}
-
-	// TODO: do shifting by 64 and assign a value to 0/f..., then go on to the next op value. Then once all
-	// 		 shifting counts are smaller than 64, then shift accordingly
-	// constexpr BigUint operator>>(const uint64_t &num);
-	// constexpr BigUint operator>>=(const uint64_t &num);
-	// constexpr BigUint operator<<(const uint64_t &num);
-	// constexpr BigUint operator<<=(const uint64_t &num);
 
 	template<uint16_t bitsize>
 	[[nodiscard("discarded BigUint operator&")]]

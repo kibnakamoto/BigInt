@@ -98,10 +98,20 @@ namespace BigInt
 			constexpr BigUint operator/=(const BigUint &num);
 			constexpr BigUint operator%(const BigUint &num);
 			constexpr BigUint operator%=(const BigUint &num);
+
+			// all arithmetic operations defined for uint64 as well for more optimization
+			// todo: (optional) define the following (after all the functions above are defined)
+			constexpr BigUint operator+(const uint64_t &num);
+			constexpr BigUint operator+=(const uint64_t &num);
 			constexpr BigUint operator-(const uint64_t &num);
 			constexpr BigUint operator-=(const uint64_t &num);
+			constexpr BigUint operator*(const uint64_t &num);
+			constexpr BigUint operator*=(const uint64_t &num);
+			constexpr BigUint operator/(const uint64_t &num);
+			constexpr BigUint operator/=(const uint64_t &num);
 			constexpr BigUint operator%(const uint64_t &num);
 			constexpr BigUint operator%=(const uint64_t &num);
+
 			constexpr BigUint operator++();
 			constexpr BigUint operator--();
 			constexpr bool operator[](const uint32_t &index) const; // access specific bit of the number

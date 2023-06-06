@@ -218,6 +218,12 @@ class Benchmark : public Test<bitsize>
 	// basic arithmetic (3 functions)
 	// test_addition, test_subtraction_big, test_subtraction_uint64
 	bool test_addition() { return 0; }
+
+	// incrementation and decrementation (2 functions)
+	// increment, decrement
+	
+	// index operators (/2 functions)
+	// index_bit, index_uint64
 };
 
 int main()

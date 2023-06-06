@@ -11,6 +11,9 @@
 #include <type_traits>
 #include <iostream>
 
+// TODO: define exponents
+// To define operations for all types instead of just multiples of 64. Calculate 2**bitsize (in 64-bit segments), every 64-bit segment is the modulo instead of UINT64_MAX, meaning replace UINT64_MAX WITH 2**bitsize
+
 namespace BigInt
 {
 	
@@ -93,6 +96,10 @@ namespace BigInt
 			constexpr BigUint operator*=(const BigUint &num);
 			constexpr BigUint operator/(const BigUint &num);
 			constexpr BigUint operator/=(const BigUint &num);
+			constexpr BigUint operator%(const BigUint &num);
+			constexpr BigUint operator%=(const BigUint &num);
+			constexpr BigUint operator%(const uint64_t &num);
+			constexpr BigUint operator%=(const uint64_t &num);
 			constexpr BigUint operator++();
 			constexpr BigUint operator--();
 			constexpr bool operator[](const uint32_t &index) const; // access specific bit of the number
@@ -104,10 +111,10 @@ namespace BigInt
 			constexpr BigUint operator&=(const BigUint &num);
 			constexpr BigUint operator^(const BigUint &num);
 			constexpr BigUint operator^=(const BigUint &num);
-			constexpr BigUint operator>>(const BigUint &num);
-			constexpr BigUint operator>>=(const BigUint &num);
-			constexpr BigUint operator<<(const BigUint &num);
-			constexpr BigUint operator<<=(const BigUint &num);
+			constexpr BigUint operator>>(BigUint num);
+			constexpr BigUint operator>>=(BigUint num);
+			constexpr BigUint operator<<(BigUint num);
+			constexpr BigUint operator<<=(BigUint num);
 			constexpr BigUint operator>>(const uint64_t &num);
 			constexpr BigUint operator>>=(const uint64_t &num);
 			constexpr BigUint operator<<(const uint64_t &num);

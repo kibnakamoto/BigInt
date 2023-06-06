@@ -47,8 +47,8 @@ namespace BigInt
 		// add the inputs to the operator array
 	    for(size_t i=0;i<count;i++) {
 	        __uint128_t num = va_arg(args, __uint128_t);
-	        op[op_size-i*2-1] = num&bottom_mask_u128;
-	        op[op_size-i*2-2] = (num>>64)&top_mask_u128;
+	        op[op_size-i*2-1] = num&top_mask_u128; ////////////////////// RECENT CHANGE - maybe change indexes if problem
+	        op[op_size-i*2-2] = num&bottom_mask_u128;
 	    }
 		va_end(args);
 	}
@@ -70,8 +70,8 @@ namespace BigInt
 		// add the inputs to the operator array
 		uint16_t i=0;
 	    for(const auto num : {input...}) {
-	        op[op_size-i*2-1] = num&bottom_mask_u128;
-	        op[op_size-i*2-2] = (num>>64)&top_mask_u128;
+	        op[op_size-i*2-1] = num&top_mask_u128; ////////////////////// RECENT CHANGE - maybe change indexes if problem
+	        op[op_size-i*2-2] = num&bottom_mask_u128;
 			i++;
 	    }
 		return *this;
@@ -323,7 +323,7 @@ namespace BigInt
 		bool greater = 0; // or equal
 	
 		// condition to avoid iterating over non-existing members of op
-		const constexpr uint16_t iterator = op_size < num.op_size ? op_size : num.op_size; // TODO: possibly check if bigger op_size breaks to comparision
+		const constexpr uint16_t iterator = op_size < num.op_size ? op_size : num.op_size;
 		for(uint16_t i=0;i<iterator;i++) {
 			if(op[i] >= num.op[i]) {
 				greater = 1;
@@ -433,10 +433,6 @@ namespace BigInt
 
 	// TODO: do shifting by 64 and assign a value to 0/f..., then go on to the next op value. Then once all
 	// 		 shifting counts are smaller than 64, then shift accordingly
-	// constexpr BigUint operator>>(const BigUint &num);
-	// constexpr BigUint operator>>=(const BigUint &num);
-	// constexpr BigUint operator<<(const BigUint &num);
-	// constexpr BigUint operator<<=(const BigUint &num);
 	// constexpr BigUint operator>>(const uint64_t &num);
 	// constexpr BigUint operator>>=(const uint64_t &num);
 	// constexpr BigUint operator<<(const uint64_t &num);
@@ -479,47 +475,117 @@ namespace BigInt
 		return *this;
 	}
 
-	/* TODO: DEFINE THE FOLLOWING SHIFT FUNCTIONS */
-
 	template<uint16_t bitsize>
 	[[nodiscard("discarded BigUint operator>>")]]
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator>>(const BigUint &num)
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator>>(BigUint num)
 	{
 		// assuming they are the same size. Which should be enforced by compiler by default
 		uint64_t ret[op_size];
-		for(uint16_t i=0;i<op_size;i++)  ret[i] = op[i] ^ num.op[i];
+		for(uint16_t i=0;i<op_size;i++) {
+			if(num < 64) {
+				ret[i] = op[i] >> num;
+				break;
+			} else {
+				ret[i] = 0;
+				num-=64;
+			}
+		}
 		return BigUint<bitsize>(ret, op_size);
 	}
 
 	template<uint16_t bitsize>
 	[[nodiscard("discarded BigUint operator>>=")]]
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator>>=(const BigUint &num)
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator>>=(BigUint num)
 	{
 		// assuming they are the same size. Which should be enforced by compiler by default
-		for(uint16_t i=0;i<op_size;i++)  op[i] &= num.op[i];
+		for(uint16_t i=0;i<op_size;i++) {
+			if(num < 64) {
+				op[i] >>= num;
+				break;
+			} else {
+				op[i] = 0;
+				num-=64;
+			}
+		}
+		// assuming they are the same size. Which should be enforced by compiler by default
 		return *this;
 	}
 
 	template<uint16_t bitsize>
 	[[nodiscard("discarded BigUint operator<<")]]
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator<<(const BigUint &num)
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator<<(BigUint num)
 	{
 		// assuming they are the same size. Which should be enforced by compiler by default
 		uint64_t ret[op_size];
-		for(uint16_t i=0;i<op_size;i++)  ret[i] = op[i] ^ num.op[i];
+		for(uint16_t i=op_size;i --> 0;) {
+			if(num < 64) {
+				ret[i] = op[i] << num;
+				break;
+			} else {
+				ret[i] = UINT64_MAX;
+				num-=64;
+			}
+		}
 		return BigUint<bitsize>(ret, op_size);
 	}
 
 	template<uint16_t bitsize>
 	[[nodiscard("discarded BigUint operator<<=")]]
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator<<=(const BigUint &num)
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator<<=(BigUint num)
 	{
 		// assuming they are the same size. Which should be enforced by compiler by default
-		for(uint16_t i=0;i<op_size;i++)  op[i] &= num.op[i];
+		for(uint16_t i=op_size;i --> 0;) {
+			if(num < 64) {
+				op[i] <<= num;
+				break;
+			} else {
+				op[i] = UINT64_MAX;
+				num-=64;
+			}
+		}
 		return *this;
 	}
 
-	/* TODO: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ */
+	template<uint16_t bitsize>
+	[[nodiscard("discarded BigUint operator>>")]]
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator>>(const uint64_t &num)
+	{
+		// assuming they are the same size. Which should be enforced by compiler by default
+		uint64_t ret[op_size];
+		ret[0] = op[0] >> num;
+		for(uint16_t i=1;i<op_size;i++) ret[i] = op[i];
+		return BigUint<bitsize>(ret, op_size);
+	}
+
+	template<uint16_t bitsize>
+	[[nodiscard("discarded BigUint operator>>=")]]
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator>>=(const uint64_t &num)
+	{
+		// assuming they are the same size. Which should be enforced by compiler by default
+		op[0] >>= num;
+		return *this;
+	}
+
+	template<uint16_t bitsize>
+	[[nodiscard("discarded BigUint operator<<")]]
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator<<(const uint64_t &num)
+	{
+		// assuming they are the same size. Which should be enforced by compiler by default
+		uint64_t ret[op_size];
+		const constexpr uint16_t index = op-size-1;
+		ret[index] = op[index] >> num;
+		for(uint16_t i=index;i --> 0;) ret[i] = op[i];
+		return BigUint<bitsize>(ret, op_size);
+	}
+
+	template<uint16_t bitsize>
+	[[nodiscard("discarded BigUint operator<<=")]]
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator<<=(const uint64_t &num)
+	{
+		// assuming they are the same size. Which should be enforced by compiler by default
+		op[op-size-1] <<= num;
+		return *this;
+	}
 
 	template<uint16_t bitsize>
 	[[nodiscard("discarded BigUint operator|")]]

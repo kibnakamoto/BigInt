@@ -52,6 +52,9 @@ namespace BigInt
 				for(uint16_t i=start;i<width;i++) substr += str[i];
 				return substr;
 			}
+			inline uint64_t rotr(uint64_t x, unsigned int n) { return (x >> n)|(x << ((sizeof(x)<<3)-n)); }
+			inline uint64_t rotl(uint64_t x, unsigned int n) { return (x << n)|(x >> ((sizeof(x)<<3)-n)); }
+
 		public:
 			#pragma GCC diagnostic push
 			#pragma GCC diagnostic ignored "-Wignored-qualifiers" // silence this warning, the qualifiers are necesarry
@@ -97,25 +100,12 @@ namespace BigInt
 			constexpr BigUint operator+=(const BigUint &num);
 			constexpr BigUint operator-(const BigUint &num);
 			constexpr BigUint operator-=(const BigUint &num);
-			constexpr BigUint operator*(const BigUint &num);
-			constexpr BigUint operator*=(const BigUint &num);
+			constexpr BigUint operator*(BigUint num);
+			constexpr BigUint operator*=(BigUint num);
 			constexpr BigUint operator/(const BigUint &num);
 			constexpr BigUint operator/=(const BigUint &num);
 			constexpr BigUint operator%(const BigUint &num);
 			constexpr BigUint operator%=(const BigUint &num);
-
-			// all arithmetic operations defined for uint64 as well for more optimization
-			// todo: (optional) define the following (after all the functions above are defined)
-			constexpr BigUint operator+(const uint64_t &num);
-			constexpr BigUint operator+=(const uint64_t &num);
-			constexpr BigUint operator-(const uint64_t &num);
-			constexpr BigUint operator-=(const uint64_t &num);
-			constexpr BigUint operator*(const uint64_t &num);
-			constexpr BigUint operator*=(const uint64_t &num);
-			constexpr BigUint operator/(const uint64_t &num);
-			constexpr BigUint operator/=(const uint64_t &num);
-			constexpr BigUint operator%(const uint64_t &num);
-			constexpr BigUint operator%=(const uint64_t &num);
 
 			constexpr BigUint operator++();
 			constexpr BigUint operator--();
@@ -128,7 +118,7 @@ namespace BigInt
 			constexpr BigUint operator&=(const BigUint &num);
 			constexpr BigUint operator^(const BigUint &num);
 			constexpr BigUint operator^=(const BigUint &num);
-			constexpr BigUint operator>>(const uint16_t &num); // doesn't need to be BigInt because it'll be too large if bigint
+			constexpr BigUint operator>>(uint16_t num); // doesn't need to be BigInt because it'll be too large if bigint
 			constexpr BigUint operator>>=(const uint16_t &num); // uint16 because it is bit-size, and bitsize var is uint16
 			constexpr BigUint operator<<(const uint16_t &num);
 			constexpr BigUint operator<<=(const uint16_t &num);

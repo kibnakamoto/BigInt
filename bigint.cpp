@@ -7,6 +7,8 @@
 #include <cstdarg>
 #include <array>
 #include <utility>
+#include <bitset>
+#include <sstream>
 
 #include "bigint.h"
 
@@ -47,7 +49,7 @@ namespace BigInt
 		// add the inputs to the operator array
 	    for(size_t i=0;i<count;i++) {
 	        __uint128_t num = va_arg(args, __uint128_t);
-	        op[op_size-i*2-1] = num&top_mask_u128; ////////////////////// RECENT CHANGE - maybe change indexes if problem
+	        op[op_size-i*2-1] = num >> 64; ////////////////////// RECENT CHANGE - maybe change indexes if problem
 	        op[op_size-i*2-2] = num&bottom_mask_u128;
 	    }
 		va_end(args);
@@ -70,7 +72,7 @@ namespace BigInt
 		// add the inputs to the operator array
 		uint16_t i=0;
 	    for(const auto num : {input...}) {
-	        op[op_size-i*2-1] = num&top_mask_u128; ////////////////////// RECENT CHANGE - maybe change indexes if problem
+	        op[op_size-i*2-1] = num >> 64; ////////////////////// RECENT CHANGE - maybe change indexes if problem
 	        op[op_size-i*2-2] = num&bottom_mask_u128;
 			i++;
 	    }
@@ -278,7 +280,6 @@ namespace BigInt
 	}
 	
 	template<uint16_t bitsize>
-	[[nodiscard("discarded BigUint less or equal to operator<=")]]
 	constexpr bool BigUint<bitsize>::operator<=(const BigUint &num)
 	{
 		bool less = 0; // or equal
@@ -317,7 +318,6 @@ namespace BigInt
 	}
 	
 	template<uint16_t bitsize>
-	[[nodiscard("discarded BigUint greater or equal to operator>=")]]
 	constexpr bool BigUint<bitsize>::operator>=(const BigUint &num)
 	{
 		bool greater = 0; // or equal
@@ -422,7 +422,7 @@ namespace BigInt
 
 	template<uint16_t bitsize>
 	[[nodiscard("discarded BigUint operator*")]]
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator*(const BigUint &num)
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator*(BigUint num)
 	{
 		uint64_t ret[op_size];
 		for(uint16_t i=0;i<op_size;i++) {
@@ -431,13 +431,13 @@ namespace BigInt
 			while(num.op[i] > 0)
 			{
 				if (num.op[i] & 1) ret[i] = ret[i] + op[i];
+				*this <<=1;
+				num >>=1;
 			}
 		}
 		// https://www.geeksforgeeks.org/russian-peasant-multiply-two-numbers-using-bitwise-operators/
 		return BigUint<bitsize>(ret, op_size);
 	}
-	// TODO: bug on left shift. convert to uint128_t first, because shift by 63 doesn't mean shift the op[i] by 63, if it overflows, then what?
-	// shift operators have the problem of shifting only a segment of 64-bits. You need to shift all. shift 2 bits, then move all the data by 2 bits.
 
 	template<uint16_t bitsize>
 	[[nodiscard("discarded BigUint operator++")]]
@@ -507,7 +507,6 @@ namespace BigInt
 	}
 
 	template<uint16_t bitsize>
-	[[nodiscard("discarded BigUint operator&=")]]
 	constexpr BigUint<bitsize> BigUint<bitsize>::operator&=(const BigUint &num)
 	{
 		// assuming they are the same size. Which should be enforced by compiler by default
@@ -526,7 +525,6 @@ namespace BigInt
 	}
 
 	template<uint16_t bitsize>
-	[[nodiscard("discarded BigUint operator^=")]]
 	constexpr BigUint<bitsize> BigUint<bitsize>::operator^=(const BigUint &num)
 	{
 		// assuming they are the same size. Which should be enforced by compiler by default
@@ -536,15 +534,39 @@ namespace BigInt
 
 	template<uint16_t bitsize>
 	[[nodiscard("discarded BigUint operator>>")]]
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator>>(const uint16_t &num)
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator>>(uint16_t num)
 	{
 		uint64_t ret[op_size];
-		for(uint16_t i=0;i<op_size;i++) ret[i] = op[i] << num;
+		if(num >= bitsize) {
+			for(uint16_t i=0;i<op_size;i++) ret[i] = 0;
+			return BigUint<bitsize>(ret, op_size);
+		}
+		uint16_t ind = 0;
+		while(num >= 64) {
+			ret[ind] = 0;
+			num-=64;
+			ind++;
+		}
+		std::stringstream buf;
+		for(uint16_t i=0;i<op_size;i++) {
+			std::bitset<64> tmp(op[i]);
+			buf << tmp.to_string();
+		}
+		std::bitset<bitsize> bits(buf.str());
+		bits >>= num;
+		buf.clear();
+		std::string str = bits.to_string();
+		std::string out = "";
+		for(uint16_t i=0;i<op_size;i++) {
+			std::bitset<64> buffer(str.substr(i*64, i*64+64));
+			ret[i] = buffer.to_ullong();
+		}
+
+		//0x23376168335520466034583347408491594176534113027893192
 		return BigUint<bitsize>(ret, op_size);
 	}
 
 	template<uint16_t bitsize>
-	[[nodiscard("discarded BigUint operator>>=")]]
 	constexpr BigUint<bitsize> BigUint<bitsize>::operator>>=(const uint16_t &num)
 	{
 		for(uint16_t i=0;i<op_size;i++) op[i] >>= num;
@@ -561,7 +583,6 @@ namespace BigInt
 	}
 
 	template<uint16_t bitsize>
-	[[nodiscard("discarded BigUint operator<<=")]]
 	constexpr BigUint<bitsize> BigUint<bitsize>::operator<<=(const uint16_t &num)
 	{
 		for(uint16_t i=0;i<op_size;i++) op[i] <<= num;

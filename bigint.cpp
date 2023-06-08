@@ -534,19 +534,14 @@ namespace BigInt
 
 	template<uint16_t bitsize>
 	[[nodiscard("discarded BigUint operator>>")]]
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator>>(uint16_t num)
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator>>(const uint16_t &num)
 	{
 		uint64_t ret[op_size];
 		if(num >= bitsize) {
 			for(uint16_t i=0;i<op_size;i++) ret[i] = 0;
 			return BigUint<bitsize>(ret, op_size);
 		}
-		uint16_t ind = 0;
-		while(num >= 64) {
-			ret[ind] = 0;
-			num-=64;
-			ind++;
-		}
+
 		std::stringstream buf;
 		for(uint16_t i=0;i<op_size;i++) {
 			std::bitset<64> tmp(op[i]);
@@ -562,14 +557,31 @@ namespace BigInt
 			ret[i] = buffer.to_ullong();
 		}
 
-		//0x23376168335520466034583347408491594176534113027893192
 		return BigUint<bitsize>(ret, op_size);
 	}
 
 	template<uint16_t bitsize>
 	constexpr BigUint<bitsize> BigUint<bitsize>::operator>>=(const uint16_t &num)
 	{
-		for(uint16_t i=0;i<op_size;i++) op[i] >>= num;
+		if(num >= bitsize) {
+			for(uint16_t i=0;i<op_size;i++) op[i] = 0;
+			return *this;
+		}
+		std::stringstream buf;
+		for(uint16_t i=0;i<op_size;i++) {
+			std::bitset<64> tmp(op[i]);
+			buf << tmp.to_string();
+		}
+		std::bitset<bitsize> bits(buf.str());
+		bits >>= num;
+		buf.clear();
+		std::string str = bits.to_string();
+		std::string out = "";
+		for(uint16_t i=0;i<op_size;i++) {
+			std::bitset<64> buffer(str.substr(i*64, i*64+64));
+			op[i] = buffer.to_ullong();
+		}
+
 		return *this;
 	}
 
@@ -578,14 +590,50 @@ namespace BigInt
 	constexpr BigUint<bitsize> BigUint<bitsize>::operator<<(const uint16_t &num)
 	{
 		uint64_t ret[op_size];
-		for(uint16_t i=0;i<op_size;i++) ret[i] = op[i] << num;
+		if(num >= bitsize) {
+			for(uint16_t i=0;i<op_size;i++) ret[i] = 0;
+			return BigUint<bitsize>(ret, op_size);
+		}
+
+		std::stringstream buf;
+		for(uint16_t i=0;i<op_size;i++) {
+			std::bitset<64> tmp(op[i]);
+			buf << tmp.to_string();
+		}
+		std::bitset<bitsize> bits(buf.str());
+		bits <<= num;
+		buf.clear();
+		std::string str = bits.to_string();
+		std::string out = "";
+		for(uint16_t i=0;i<op_size;i++) {
+			std::bitset<64> buffer(str.substr(i*64, i*64+64));
+			ret[i] = buffer.to_ullong();
+		}
 		return BigUint<bitsize>(ret, op_size);
 	}
 
 	template<uint16_t bitsize>
 	constexpr BigUint<bitsize> BigUint<bitsize>::operator<<=(const uint16_t &num)
 	{
-		for(uint16_t i=0;i<op_size;i++) op[i] <<= num;
+		if(num >= bitsize) {
+			for(uint16_t i=0;i<op_size;i++) op[i] = 0;
+			return *this;
+		}
+		std::stringstream buf;
+		for(uint16_t i=0;i<op_size;i++) {
+			std::bitset<64> tmp(op[i]);
+			buf << tmp.to_string();
+		}
+		std::bitset<bitsize> bits(buf.str());
+		bits <<= num;
+		buf.clear();
+		std::string str = bits.to_string();
+		std::string out = "";
+		for(uint16_t i=0;i<op_size;i++) {
+			std::bitset<64> buffer(str.substr(i*64, i*64+64));
+			op[i] = buffer.to_ullong();
+		}
+
 		return *this;
 	}
 

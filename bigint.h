@@ -118,7 +118,7 @@ namespace BigInt
 			constexpr BigUint operator&=(const BigUint &num);
 			constexpr BigUint operator^(const BigUint &num);
 			constexpr BigUint operator^=(const BigUint &num);
-			constexpr BigUint operator>>(uint16_t num); // doesn't need to be BigInt because it'll be too large if bigint
+			constexpr BigUint operator>>(const uint16_t &num); // doesn't need to be BigInt because it'll be too large if bigint
 			constexpr BigUint operator>>=(const uint16_t &num); // uint16 because it is bit-size, and bitsize var is uint16
 			constexpr BigUint operator<<(const uint16_t &num);
 			constexpr BigUint operator<<=(const uint16_t &num);

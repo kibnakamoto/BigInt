@@ -342,15 +342,11 @@ namespace BigInt
 	{
 		uint64_t new_op[op_size];
 		std::copy(std::begin(op), std::end(op), std::begin(new_op)); // set to op
-		std::cout << std::hex << std::endl << "old op:\t";
-		for(uint16_t i=0;i<op_size;i++) {
-			std::cout << new_op[i] << " ";
-		}
 		for(uint16_t i=op_size;i --> 0;) {
 			__uint128_t tmp = op[i];
 			tmp += num.op[i];
 			if(tmp > UINT64_MAX) {
-	    		new_op[i] = tmp & 64; // assign the main value to assign value with no carry (only no carry because of bit-shifting)
+	    		new_op[i] = tmp & UINT64_MAX; // assign the main value to assign value with no carry (only no carry because of bit-shifting)
 				uint16_t j = 1;
 				while(true) { // if carry exists
 					__uint128_t new_tmp = (tmp >> 64)+new_op[i+j];
@@ -367,15 +363,35 @@ namespace BigInt
 			}
 		}
 	
-		// testing
-		// std::cout << std::endl << "new_op:\t";
-		// for(uint16_t i=0;i<op_size;i++) {
-		// 	std::cout << new_op[i] << "";
-		// }
-		// std::cout << std::endl << "answer: " << "466ec2d066aa408cc068b0668e810922b282eca6822604f1263248acc2";
-	
-		// std::cout << std::endl << "returned" << std::endl;
 		return BigUint<bitsize>(new_op, op_size);
+	}
+
+	template<uint16_t bitsize>
+	[[nodiscard("discarded BigUint operator+=")]]
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator+=(const BigUint &num)
+	{
+		for(uint16_t i=op_size;i --> 0;) {
+			__uint128_t tmp = op[i];
+			tmp += num.op[i];
+			if(tmp > UINT64_MAX) {
+	    		op[i] = tmp & UINT64_MAX; // assign the main value to assign value with no carry (only no carry because of bit-shifting)
+				uint16_t j = 1;
+				while(true) { // if carry exists
+					__uint128_t new_tmp = (tmp >> 64)+op[i+j];
+					if(new_tmp > UINT64_MAX) {
+	    				op[i+j] = new_tmp & UINT64_MAX;
+					} else {
+						op[i+j] = new_tmp;
+						break;
+					}
+					j++;
+				}
+			} else {
+					op[i] = tmp;
+			}
+		}
+	
+		return *this;
 	}
 
 	#pragma GCC diagnostic push
@@ -386,57 +402,67 @@ namespace BigInt
 	[[nodiscard("discarded BigUint operator-")]]
 	constexpr BigUint<bitsize> BigUint<bitsize>::operator-(const BigUint &num)
 	{
-		if constexpr(op_size >= num.op_size) { // result is bigger than num, default condition, if removed
-			uint64_t ret[op_size]; // make sure to assign the biggest data size in the subtraction so that there is less chance of a value being sent to the void
-			for(uint16_t i=0;i<num.op_size;i++) { // cover 0 to num.op_size (smaller)
-				if (op[i] < num.op[i]) {
-					ret[i] = (UINT64_MAX - num.op[i]) + op[i];
-				} else {
-					ret[i] = op[i] - num.op[i];
-				}
+		uint64_t ret[op_size];
+		uint64_t new_op[op_size];
+		std::copy(std::begin(op), std::end(op), std::begin(new_op)); // set to op
+		for(uint16_t i=op_size;i --> 0;) {
+			ret[i] = 0;
+			if (new_op[i] < num.op[i]) {
+				ret[i] = new_op[i]-num.op[i];
+				// wrong carry definition
+				new_op[i-1]--;
+			} else {
+				ret[i] = new_op[i] - num.op[i];
 			}
-			if constexpr(op_size != num.op_size) {
-				for(uint64_t i=num.op_size;i<op_size;i++) {
-					ret[i] = op[i];
-				}
-			}
-			return BigUint<bitsize>(ret, op_size);
-		} else {
-			uint64_t ret[num.op_size];
-			for(uint16_t i=0;i<op_size;i++) {
-				if (op[i] < num.op[i]) {
-					ret[i] = (UINT64_MAX - num.op[i]) + op[i];
-				} else {
-					ret[i] = op[i] - num.op[i];
-				}
-				
-			}
-			for(uint64_t i=op_size;i<num.op_size;i++) {
-				ret[i] = UINT64_MAX-num.op[i];
-			}
-			
-			return BigUint<bitsize>(ret, num.op_size);
 		}
+		return BigUint<bitsize>(ret, op_size);
 	}
 	#pragma GCC diagnostic pop
+
+	template<uint16_t bitsize>
+	[[nodiscard("discarded BigUint operator-=")]]
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator-=(const BigUint &num)
+	{
+		for(uint16_t i=op_size;i --> 0;) {
+			if (op[i] < num.op[i]) {
+				op[i] -= num.op[i];
+				op[i-1]--;
+			} else {
+				op[i] -= num.op[i];
+			}
+		}
+		return *this;
+	}
 
 	template<uint16_t bitsize>
 	[[nodiscard("discarded BigUint operator*")]]
 	constexpr BigUint<bitsize> BigUint<bitsize>::operator*(BigUint num)
 	{
-		uint64_t ret[op_size];
-		for(uint16_t i=0;i<op_size;i++) {
-			// Russian peasant algorithm
-			ret[i] = 0;
-			while(num.op[i] > 0)
-			{
-				if (num.op[i] & 1) ret[i] = ret[i] + op[i];
-				*this <<=1;
-				num >>=1;
-			}
+		// Russian Peasant Algorithm
+		BigUint<bitsize> ret = 0;
+		while(num > "0") {
+			if(num & "1") ret = ret + *this;
+			*this <<= 1;
+			num >>= 1;
 		}
-		// https://www.geeksforgeeks.org/russian-peasant-multiply-two-numbers-using-bitwise-operators/
-		return BigUint<bitsize>(ret, op_size);
+
+		return ret;
+	}
+
+	template<uint16_t bitsize>
+	[[nodiscard("discarded BigUint operator*=")]]
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator*=(BigUint num)
+	{
+		*this = *this * num;
+		return *this;
+	}
+
+	template<uint16_t bitsize>
+	[[nodiscard("discarded BigUint operator/")]]
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator/(const BigUint &num)
+	{
+		//https://en.wikipedia.org/wiki/Division_algorithm
+		return *this;
 	}
 
 	template<uint16_t bitsize>

@@ -141,6 +141,10 @@ namespace BigInt
 	
 			inline constexpr operator uint64_t*() noexcept { return op; }
 
+			constexpr operator bool() noexcept {
+				return op[op_size-1] != 0;
+			}
+
 			constexpr operator uint64_t() noexcept {
 				for(uint16_t i=0;i<op_size;i++) {
 					if(op[i] != 0) return op[i];
@@ -328,6 +332,7 @@ namespace BigInt
 	using uint256_t = BigUint<256>;
 	using uint384_t = BigUint<384>;
 	using uint512_t = BigUint<512>;
+	using uint1024_t = BigUint<1024>;
 }; /* NAMESPACE BIGINT */
 
 // include here because of template class and function

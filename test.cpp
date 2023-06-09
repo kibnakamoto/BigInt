@@ -215,7 +215,7 @@ class Benchmark : public Test<bitsize>
 	// bitwise_rshift_eq_uint16, bitwise_lshift_uint16, bitwise_lshift_eq_uint16, bitwise_or, bitwise_or_eq
 
 	// basic arithmetic (3 functions)
-	// test_addition, test_subtraction_big, test_subtraction_uint64
+	// test_addition, test_subtraction, test_mul
 	bool test_addition() { return 0; }
 
 	// incrementation and decrementation (2 functions)

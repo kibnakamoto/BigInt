@@ -475,16 +475,10 @@ namespace BigInt
 			}
 
 			d >>= 1;
-			std::cout << std::endl << d;
-			std::cout << std::endl;
-			d-=1;
 			current >>= 1;
-			current-=1;
-			std::cout << std::endl << d;
-			std::cout << std::endl;
 
-			while (current != "0") {
-				if(*this >= d) {
+			while(current != "0") {
+				if(*this > d) {
 					*this -= d;
 					ret |= current;
 				}

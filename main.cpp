@@ -24,7 +24,7 @@ int main()
 	std::cout << "\n~num: " << ~num;
 	std::cout << "\nnum << 20: " << (num << uint256_t(20));
 	std::cout << "\nnum * 200: " << num.to<256>() * uint256_t(200);
-	std::cout << "\nnum / 2: " << num / uint256_t(2);
+	std::cout << "\nnum / 2: " << num / uint256_t(200);
 	std::cout << std::endl;
 	return 0;
 }

@@ -78,7 +78,7 @@ namespace BigInt
 			consteval BigUint assign_conste(Ts...input) noexcept; // assign consteval using the same method as the next function
 	
 			// numerical input. If number is 256-bit, input = left 128-bit, right 128-bit
-			constexpr explicit BigUint(const uint16_t count, __uint128_t input...);
+			constexpr BigUint(const uint16_t count, __uint128_t input...);
 
 			constexpr BigUint(const uint64_t num) {
 				for(uint16_t i=0;i<op_size-1;i++) op[i] = 0;

@@ -16,15 +16,15 @@ int main()
 	std::cout << "\nhex num2: " << std::hex << num2;
 	auto num3 = num + std::string("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff") ;//+ num2;
 	//uint192_t num4 = std::string("134395843534503845740957390690572"); // 132-bit hex
-	uint192_t num4 = std::string("ffffffffffffffffffffffffffffffffffffffffffffff"); // 132-bit hex
+	uint192_t num4 = std::string("13439584353450384574095739069057212345678"); // 132-bit hex
 	std::cout << "\nnum+num2: " << std::hex << num3 << std::endl;
 	std::cout << "\nhex num4: " << std::hex << num4;
 
 	std::cout << "\nnum - num4: " << (num-num4.to<256>());
-	//std::cout << "\n~num: " << ~num;
-	//stdstd::cout << "\nnum << 20: " << (num << uint256_t(20));
-	//stdstd::cout << "\nnum * 200: " << num.to<256>() * uint256_t(200);
-	//stdstd::cout << "\nnum / 2: " << num / uint256_t(2);
+	std::cout << "\n~num: " << ~num;
+	std::cout << "\nnum << 20: " << (num << uint256_t(20));
+	std::cout << "\nnum * 200: " << num.to<256>() * uint256_t(200);
+	std::cout << "\nnum / 2: " << num / uint256_t(2);
 	std::cout << std::endl;
 	return 0;
 }

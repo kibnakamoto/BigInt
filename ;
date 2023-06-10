@@ -351,7 +351,6 @@ namespace BigInt
 	    		new_op[i] += tmp & UINT64_MAX; // assign the main value to assign value with no carry (only no carry because of bit-shifting)
 				uint16_t j = 1;
 				while(new_op[i-j] == UINT64_MAX and i+j < op_size-1) {
-	    			tmp_op[i-j]++; // carry
 					j++;
 				}
 	    		tmp_op[i-j]++;
@@ -376,7 +375,6 @@ namespace BigInt
 	    		op[i] = tmp & UINT64_MAX; // assign the main value to assign value with no carry (only no carry because of bit-shifting)
 				uint16_t j = 1;
 				while(op[i-j] == UINT64_MAX and i+j < op_size-1) { // carry index
-	    			tmp_op[i-j]++; // carry
 					j++;
 				}
 	    		tmp_op[i-j]++; // carry
@@ -399,10 +397,7 @@ namespace BigInt
 			if (new_op[i] < num.op[i]) {
 				ret[i] = new_op[i]-num.op[i];
 				uint16_t j=1;
-				while(new_op[i-j] == 0 and i-j > 0) {
-					new_op[i-j]--; // carry
-					j++;
-				}
+				while(new_op[i-j] == 0 and i-j > 0) j++;
 				new_op[i-j]--;
 			} else {
 				ret[i] = new_op[i] - num.op[i];
@@ -418,10 +413,7 @@ namespace BigInt
 			if (op[i] < num.op[i]) {
 				op[i] -= num.op[i];
 				uint16_t j=1;
-				while(op[i-j] == 0 and i-j > 0) {
-					op[i-j]--; // carry
-					j++;
-				}
+				while(op[i-j] == 0 and i-j > 0) j++;
 				op[i-j]--;
 			} else {
 				op[i] -= num.op[i];
@@ -460,7 +452,7 @@ namespace BigInt
 	{
 			BigUint<bitsize> d = num;
 			BigUint<bitsize> current = 1;
-			BigUint<bitsize> ret = 0;
+			constexpr BigUint<bitsize> ret = {4,1,1,1,1};
 			if (d > *this) {
 				return 0;
 			}
@@ -475,13 +467,7 @@ namespace BigInt
 			}
 
 			d >>= 1;
-			std::cout << std::endl << d;
-			std::cout << std::endl;
-			d-=1;
 			current >>= 1;
-			current-=1;
-			std::cout << std::endl << d;
-			std::cout << std::endl;
 
 			while (current != "0") {
 				if(*this >= d) {

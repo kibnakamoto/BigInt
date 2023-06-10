@@ -385,10 +385,6 @@ namespace BigInt
 		return *this;
 	}
 
-	#pragma GCC diagnostic push
-	#pragma GCC diagnostic ignored "-Wpragmas"
-	#pragma GCC diagnostic ignored "-Wc++2b-extensions" // for some reason raises -Wpragmas because warning not found while it surpresses the warning at the same time
-	#pragma GCC diagnostic ignored "-Wc++17-extensions"
 	template<uint16_t bitsize>
 	[[nodiscard("discarded BigUint operator-")]]
 	constexpr BigUint<bitsize> BigUint<bitsize>::operator-(const BigUint &num)
@@ -400,16 +396,15 @@ namespace BigInt
 			ret[i] = 0;
 			if (new_op[i] < num.op[i]) {
 				ret[i] = new_op[i]-num.op[i];
-				uint16_t j=0;
-				while(ret[i-1-j] == 0) j++;
-				new_op[i-1-j]--;
+				uint16_t j=1;
+				while(new_op[i-j] == 0 and i-j > 0) j++;
+				new_op[i-j]--;
 			} else {
 				ret[i] = new_op[i] - num.op[i];
 			}
 		}
 		return BigUint<bitsize>(ret, op_size);
 	}
-	#pragma GCC diagnostic pop
 
 	template<uint16_t bitsize>
 	constexpr BigUint<bitsize> BigUint<bitsize>::operator-=(const BigUint &num)
@@ -417,7 +412,9 @@ namespace BigInt
 		for(uint16_t i=op_size;i --> 0;) {
 			if (op[i] < num.op[i]) {
 				op[i] -= num.op[i];
-				op[i-1]--;
+				uint16_t j=1;
+				while(op[i-j] == 0 and i-j > 0) j++;
+				op[i-j]--;
 			} else {
 				op[i] -= num.op[i];
 			}
@@ -453,42 +450,55 @@ namespace BigInt
 	[[nodiscard("discarded BigUint operator/")]]
 	constexpr BigUint<bitsize> BigUint<bitsize>::operator/(const BigUint &num)
 	{
-
-	    uint16_t bits_left = op_size*4;
-		auto quot = *this;
-		BigUint<bitsize> rem = 0;
-		do {
-			BigUint<bitsize> t = quot;
-			quot *= 2;
-			rem += quot < t;
-			if (rem >= num) {
-				rem-=num;
-				quot+=1;
+			BigUint<bitsize> d = num;
+			BigUint<bitsize> current = 1;
+			BigUint<bitsize> ret = 0;
+			if (d > *this) {
+				return 0;
 			}
-			bits_left--;
-		} while(bits_left);
-		return quot;
+
+			if (d == *this) {
+				return 1;
+			}
+
+			while (d < *this) {
+				d <<= 1;
+				current <<= 1;
+			}
+
+			d >>= 1;
+			current >>= 1;
+
+			while (current != "0") {
+				if(*this >= d) {
+					*this = *this - d;
+					ret |= current;
+				}
+				current >>= 1;
+				d >>= 1;
+			}
+			return ret;
 	
-	    //uint32_t quot, rem, t;
-	    //quot = dividend;
-	    //rem = 0;
-	    //do {
-	    //        // (rem:quot) << 1
-	    //        t = quot;
-	    //        quot = quot + quot;
-	    //        rem = rem + rem + (quot < t);
-	
-	    //        if (rem >= divisor) {
-	    //            rem = rem - divisor;
-	    //            quot = quot + 1;
-	    //        }
-	    //        bits_left--;
-	    //} while (bits_left);
-	    //return quot;
+//	while (current!=0) {
+//	    if ( dividend >= denom) {
+//	        dividend -= denom;
+//	        answer |= current;
+//	    }
+//	    current >>= 1;
+//	    denom >>= 1;
+//	}
+//	return answer;
+//}
 	}
 
 	template<uint16_t bitsize>
-	[[nodiscard("discarded BigUint operator++")]]
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator/=(const BigUint &num)
+	{
+		*this = *this / num;
+		return *this;
+	}
+
+	template<uint16_t bitsize>
 	constexpr BigUint<bitsize> BigUint<bitsize>::operator++()
 	{
 		for(uint16_t i=op_size;i --> 0;) {
@@ -505,7 +515,6 @@ namespace BigInt
 	}
 
 	template<uint16_t bitsize>
-	[[nodiscard("discarded BigUint operator--")]]
 	constexpr BigUint<bitsize> BigUint<bitsize>::operator--()
 	{
 		for(uint16_t i=0;i<op_size;i++) {
@@ -696,7 +705,6 @@ namespace BigInt
 	}
 
 	template<uint16_t bitsize>
-	[[nodiscard("discarded BigUint operator|=")]]
 	constexpr BigUint<bitsize> BigUint<bitsize>::operator|=(const BigUint &num)
 	{
 		// assuming they are the same size. Which should be enforced by compiler by default

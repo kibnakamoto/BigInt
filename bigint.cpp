@@ -341,25 +341,21 @@ namespace BigInt
 	constexpr BigUint<bitsize> BigUint<bitsize>::operator+(const BigUint &num)
 	{
 		uint64_t new_op[op_size];
-		std::copy(std::begin(op), std::end(op), std::begin(new_op)); // set to op
+		uint64_t tmp_op[op_size];
+		std::copy(std::begin(op), std::end(op), std::begin(tmp_op)); // set to op
 		for(uint16_t i=op_size;i --> 0;) {
-			__uint128_t tmp = op[i];
+			new_op[i] = 0;
+			__uint128_t tmp = tmp_op[i];
 			tmp += num.op[i];
 			if(tmp > UINT64_MAX) {
-	    		new_op[i] = tmp & UINT64_MAX; // assign the main value to assign value with no carry (only no carry because of bit-shifting)
+	    		new_op[i] += tmp & UINT64_MAX; // assign the main value to assign value with no carry (only no carry because of bit-shifting)
 				uint16_t j = 1;
-				while(true) { // if carry exists
-					__uint128_t new_tmp = (tmp >> 64)+new_op[i+j];
-					if(new_tmp > UINT64_MAX) {
-	    				new_op[i+j] = new_tmp & UINT64_MAX;
-					} else {
-						new_op[i+j] = new_tmp;
-						break;
-					}
+				while(new_op[i-j] == UINT64_MAX and i+j < op_size-1) {
 					j++;
 				}
+	    		tmp_op[i-j]++;
 			} else {
-				new_op[i] = tmp;
+				new_op[i] += tmp;
 			}
 		}
 	
@@ -367,30 +363,25 @@ namespace BigInt
 	}
 
 	template<uint16_t bitsize>
-	[[nodiscard("discarded BigUint operator+=")]]
 	constexpr BigUint<bitsize> BigUint<bitsize>::operator+=(const BigUint &num)
 	{
+		uint64_t tmp_op[op_size];
+		std::copy(std::begin(op), std::end(op), std::begin(tmp_op)); // set to op
 		for(uint16_t i=op_size;i --> 0;) {
-			__uint128_t tmp = op[i];
+			op[i] = 0;
+			__uint128_t tmp = tmp_op[i];
 			tmp += num.op[i];
 			if(tmp > UINT64_MAX) {
 	    		op[i] = tmp & UINT64_MAX; // assign the main value to assign value with no carry (only no carry because of bit-shifting)
 				uint16_t j = 1;
-				while(true) { // if carry exists
-					__uint128_t new_tmp = (tmp >> 64)+op[i+j];
-					if(new_tmp > UINT64_MAX) {
-	    				op[i+j] = new_tmp & UINT64_MAX;
-					} else {
-						op[i+j] = new_tmp;
-						break;
-					}
+				while(op[i-j] == UINT64_MAX and i+j < op_size-1) { // carry index
 					j++;
 				}
+	    		tmp_op[i-j]++; // carry
 			} else {
-					op[i] = tmp;
+				op[i] += tmp;
 			}
 		}
-	
 		return *this;
 	}
 
@@ -409,8 +400,9 @@ namespace BigInt
 			ret[i] = 0;
 			if (new_op[i] < num.op[i]) {
 				ret[i] = new_op[i]-num.op[i];
-				// wrong carry definition
-				new_op[i-1]--;
+				uint16_t j=0;
+				while(ret[i-1-j] == 0) j++;
+				new_op[i-1-j]--;
 			} else {
 				ret[i] = new_op[i] - num.op[i];
 			}
@@ -420,7 +412,6 @@ namespace BigInt
 	#pragma GCC diagnostic pop
 
 	template<uint16_t bitsize>
-	[[nodiscard("discarded BigUint operator-=")]]
 	constexpr BigUint<bitsize> BigUint<bitsize>::operator-=(const BigUint &num)
 	{
 		for(uint16_t i=op_size;i --> 0;) {
@@ -439,18 +430,19 @@ namespace BigInt
 	constexpr BigUint<bitsize> BigUint<bitsize>::operator*(BigUint num)
 	{
 		// Russian Peasant Algorithm
+		uint64_t o[op_size];
+		for(uint16_t i=0;i<op_size;i++) o[i] = op[i];
+		BigUint<bitsize> new_op = BigUint<bitsize>(o, op_size);
 		BigUint<bitsize> ret = 0;
 		while(num > "0") {
-			if(num & "1") ret = ret + *this;
-			*this <<= 1;
+			if(num & "1") ret += new_op;
+			new_op <<= 1;
 			num >>= 1;
 		}
-
 		return ret;
 	}
 
 	template<uint16_t bitsize>
-	[[nodiscard("discarded BigUint operator*=")]]
 	constexpr BigUint<bitsize> BigUint<bitsize>::operator*=(BigUint num)
 	{
 		*this = *this * num;
@@ -461,8 +453,38 @@ namespace BigInt
 	[[nodiscard("discarded BigUint operator/")]]
 	constexpr BigUint<bitsize> BigUint<bitsize>::operator/(const BigUint &num)
 	{
-		//https://en.wikipedia.org/wiki/Division_algorithm
-		return *this;
+
+	    uint16_t bits_left = op_size*4;
+		auto quot = *this;
+		BigUint<bitsize> rem = 0;
+		do {
+			BigUint<bitsize> t = quot;
+			quot *= 2;
+			rem += quot < t;
+			if (rem >= num) {
+				rem-=num;
+				quot+=1;
+			}
+			bits_left--;
+		} while(bits_left);
+		return quot;
+	
+	    //uint32_t quot, rem, t;
+	    //quot = dividend;
+	    //rem = 0;
+	    //do {
+	    //        // (rem:quot) << 1
+	    //        t = quot;
+	    //        quot = quot + quot;
+	    //        rem = rem + rem + (quot < t);
+	
+	    //        if (rem >= divisor) {
+	    //            rem = rem - divisor;
+	    //            quot = quot + 1;
+	    //        }
+	    //        bits_left--;
+	    //} while (bits_left);
+	    //return quot;
 	}
 
 	template<uint16_t bitsize>

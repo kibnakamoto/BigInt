@@ -460,8 +460,8 @@ class Benchmark
 				hexset[i/4] <<= 1;
 				hexset[i/4] |= bitset[i];
 				if(i%4==3) {
-					*ptr++ = hex_digits[hexset[i/4] >> 4];
-					*ptr++ = hex_digits[hexset[i/4] & 0x0f];
+					str += hex_digits[hexset[i/4] >> 4];
+					str += hex_digits[hexset[i/4] & 0x0f];
 				}
 			}
 			return str;
@@ -470,9 +470,6 @@ class Benchmark
 		virtual void randomize() {
 			BigUint<bitsize> number = rand_str(bitsize); // 232-bit hex
 			BigUint<bitsize> number2 = rand_str(bitsize); // 232-bit hex
-			BigUint<bitsize> zero = rand_str(bitsize);
-			BigUint<bitsize> one = rand_str(bitsize);
-			BigUint<bitsize> two = rand_str(bitsize);
 			BigUint<bitsize> rand = rand_str(bitsize); // 232-bit hex
 			BigUint<bitsize> and_ex = rand_str(bitsize); // 232-bit hex
 			BigUint<bitsize> example = rand_str(bitsize); // 232-bit hex
@@ -663,12 +660,239 @@ class Benchmark
 		virtual void test_index_uint64() {
 			uint64_t first_index = number[(uint16_t)0];
 		}
+
+	std::chrono::system_clock::time_point timer_starts[42];
+	std::chrono::system_clock::time_point timer_ends[42];
+	void benchmark_once()
+	{
+		// test_chararr_assignment, test_str_assignment, test_long_chararr_assignment, test_long_str_assignment, test_long_hex_assignment, test_int_assignment, test_long_int_assignment
+		timer_starts[0] = std::chrono::high_resolution_clock::now();
+		test_chararr_assignment();
+		timer_ends[0] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[1] = std::chrono::high_resolution_clock::now();
+		test_str_assignment();
+		timer_ends[1] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[2] = std::chrono::high_resolution_clock::now();
+		test_long_chararr_assignment();
+		timer_ends[2] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[3] = std::chrono::high_resolution_clock::now();
+		test_long_str_assignment();
+		timer_ends[3] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[4] = std::chrono::high_resolution_clock::now();
+		test_long_hex_assignment();
+		timer_ends[4] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[5] = std::chrono::high_resolution_clock::now();
+		test_int_assignment();
+		timer_ends[5] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[6] = std::chrono::high_resolution_clock::now();
+		test_long_int_assignment();
+		timer_ends[6] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		// test_bool_and, test_bool_or, test_bool_equal_eq, test_bool_not, test_bool_not_eq, test_bool_less, test_bool_less_eq, test_bool_greater, test_bool_greater_eq
+		timer_starts[7] = std::chrono::high_resolution_clock::now();
+		test_bool_and();
+		timer_ends[7] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[8] = std::chrono::high_resolution_clock::now();
+		test_bool_or();
+		timer_ends[8] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[9] = std::chrono::high_resolution_clock::now();
+		test_bool_equal_eq();
+		timer_ends[9] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[10] = std::chrono::high_resolution_clock::now();
+		test_bool_not();
+		timer_ends[10] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[11] = std::chrono::high_resolution_clock::now();
+		test_bool_not_eq();
+		timer_ends[11] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[12] = std::chrono::high_resolution_clock::now();
+		test_bool_less();
+		timer_ends[12] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[13] = std::chrono::high_resolution_clock::now();
+		test_bool_less_eq();
+		timer_ends[13] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[14] = std::chrono::high_resolution_clock::now();
+		test_bool_greater();
+		timer_ends[14] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[15] = std::chrono::high_resolution_clock::now();
+		test_bool_greater_eq();
+		timer_ends[15] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[16] = std::chrono::high_resolution_clock::now();
+		test_bool_less_eq();
+		timer_ends[16] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		// test_bitwise_not, bitwise_and, bitwise_and_eq, bitwise_xor, bitwise_xor_eq, bitwise_rshift,
+		// bitwise_rshift_eq, bitwise_lshift, bitwise_lshift_eq, bitwise_or, bitwise_or_eq
+		timer_starts[17] = std::chrono::high_resolution_clock::now();
+		test_bitwise_not();
+		timer_ends[17] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[18] = std::chrono::high_resolution_clock::now();
+		test_bitwise_and();
+		timer_ends[18] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[19] = std::chrono::high_resolution_clock::now();
+		test_bitwise_and_eq();
+		timer_ends[19] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[20] = std::chrono::high_resolution_clock::now();
+		test_bitwise_xor();
+		timer_ends[20] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[21] = std::chrono::high_resolution_clock::now();
+		test_bitwise_xor_eq();
+		timer_ends[21] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[22] = std::chrono::high_resolution_clock::now();
+		test_bitwise_rshift();
+		timer_ends[22] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[22] = std::chrono::high_resolution_clock::now();
+		test_bitwise_rshift_eq();
+		timer_ends[22] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[23] = std::chrono::high_resolution_clock::now();
+		test_bitwise_lshift();
+		timer_ends[23] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[24] = std::chrono::high_resolution_clock::now();
+		test_bitwise_lshift_eq();
+		timer_ends[24] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[25] = std::chrono::high_resolution_clock::now();
+		test_bitwise_or();
+		timer_ends[25] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[26] = std::chrono::high_resolution_clock::now();
+		test_bitwise_or_eq();
+		timer_ends[26] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		// test_addition, test_addition_eq, test_subtraction, test_subtraction_eq, test_mul, test_mul_eq, test_div, test_div_eq, test_mod, test_mod_eq, test_pow
+		timer_starts[27] = std::chrono::high_resolution_clock::now();
+		test_addition();
+		timer_ends[27] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[28] = std::chrono::high_resolution_clock::now();
+		test_addition_eq();
+		timer_ends[28] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[29] = std::chrono::high_resolution_clock::now();
+		test_subtraction();
+		timer_ends[29] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[30] = std::chrono::high_resolution_clock::now();
+		test_subtraction_eq();
+		timer_ends[30] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[31] = std::chrono::high_resolution_clock::now();
+		test_mul();
+		timer_ends[31] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[32] = std::chrono::high_resolution_clock::now();
+		test_mul_eq();
+		timer_ends[32] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[33] = std::chrono::high_resolution_clock::now();
+		test_div();
+		timer_ends[33] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[34] = std::chrono::high_resolution_clock::now();
+		test_div_eq();
+		timer_ends[34] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[35] = std::chrono::high_resolution_clock::now();
+		test_mod();
+		timer_ends[35] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[36] = std::chrono::high_resolution_clock::now();
+		test_mod_eq();
+		timer_ends[36] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[37] = std::chrono::high_resolution_clock::now();
+		test_pow();
+		timer_ends[37] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		// test_inc, test_dec
+		timer_starts[38] = std::chrono::high_resolution_clock::now();
+		test_inc();
+		timer_ends[38] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[39] = std::chrono::high_resolution_clock::now();
+		test_dec();
+		timer_ends[39] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		// test_index_bit, test_index_uint64
+		timer_starts[40] = std::chrono::high_resolution_clock::now();
+		test_index_bit();
+		timer_ends[40] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[41] = std::chrono::high_resolution_clock::now();
+		test_index_uint64();
+		timer_ends[41] = std::chrono::high_resolution_clock::now();
+		reset();
+	}
 };
 
 int main()
 {
 	constexpr const static uint16_t bitsize = 256;
-	static uint32_t count=100;
+	static uint32_t count=1;
 	Test<bitsize> tester = Test<bitsize>();
 
 	/************* VALUE TESTS *************/
@@ -677,192 +901,17 @@ int main()
 	std::string all_functions[42] = {"test_chararr_assignment", "test_str_assignment", "test_long_chararr_assignment", "test_long_str_assignment", "test_long_hex_assignment", "test_int_assignment", "test_long_int_assignment", "test_bool_and", "test_bool_or", "test_bool_equal_eq", "test_bool_not", "test_bool_not_eq", "test_bool_less", "test_bool_less_eq", "test_bool_greater", "test_bool_greater_eq", "test_bitwise_not", "bitwise_and", "bitwise_and_eq", "bitwise_xor", "bitwise_xor_eq", "bitwise_rshift", "bitwise_rshift_eq", "bitwise_lshift", "bitwise_lshift_eq", "bitwise_or", "bitwise_or_eq", "test_addition", "test_addition_eq", "test_subtraction", "test_subtraction_eq", "test_mul", "test_mul_eq", "test_div", "test_div_eq", "test_mod", "test_mod_eq", "test_pow", "test_inc", "test_dec", "test_index_bit", "test_index_uint64"};
 
 	/************* BENCHMARK TESTS *************/
-	std::chrono::system_clock::time_point timer_starts[42];
-	std::chrono::system_clock::time_point timer_ends[42];
-
 	Benchmark<bitsize> benchmarker = Benchmark<bitsize>();
 
-	// test_chararr_assignment, test_str_assignment, test_long_chararr_assignment, test_long_str_assignment, test_long_hex_assignment, test_int_assignment, test_long_int_assignment
-	timer_starts[0] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_chararr_assignment();
-	timer_ends[0] = std::chrono::high_resolution_clock::now();
+	for(uint32_t i=0;i<count;i++) {
+		benchmarker.benchmark_once();
+		benchmarker.randomize();
 
-	timer_starts[1] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_str_assignment();
-	timer_ends[1] = std::chrono::high_resolution_clock::now();
+	}
 
-	timer_starts[2] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_long_chararr_assignment();
-	timer_ends[2] = std::chrono::high_resolution_clock::now();
 
-	timer_starts[3] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_long_str_assignment();
-	timer_ends[3] = std::chrono::high_resolution_clock::now();
-
-	timer_starts[4] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_long_hex_assignment();
-	timer_ends[4] = std::chrono::high_resolution_clock::now();
-
-	timer_starts[5] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_int_assignment();
-	timer_ends[5] = std::chrono::high_resolution_clock::now();
-
-	timer_starts[6] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_long_int_assignment();
-	timer_ends[6] = std::chrono::high_resolution_clock::now();
-
-	// test_bool_and, test_bool_or, test_bool_equal_eq, test_bool_not, test_bool_not_eq, test_bool_less, test_bool_less_eq, test_bool_greater, test_bool_greater_eq
-	timer_starts[7] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_bool_and();
-	timer_ends[7] = std::chrono::high_resolution_clock::now();
-
-	timer_starts[8] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_bool_or();
-	timer_ends[8] = std::chrono::high_resolution_clock::now();
-
-	timer_starts[9] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_bool_equal_eq();
-	timer_ends[9] = std::chrono::high_resolution_clock::now();
-
-	timer_starts[10] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_bool_not();
-	timer_ends[10] = std::chrono::high_resolution_clock::now();
-
-	timer_starts[11] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_bool_not_eq();
-	timer_ends[11] = std::chrono::high_resolution_clock::now();
-
-	timer_starts[12] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_bool_less();
-	timer_ends[12] = std::chrono::high_resolution_clock::now();
-
-	timer_starts[13] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_bool_less_eq();
-	timer_ends[13] = std::chrono::high_resolution_clock::now();
-
-	timer_starts[14] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_bool_greater();
-	timer_ends[14] = std::chrono::high_resolution_clock::now();
-
-	timer_starts[15] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_bool_greater_eq();
-	timer_ends[15] = std::chrono::high_resolution_clock::now();
-
-	timer_starts[16] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_bool_less_eq();
-	timer_ends[16] = std::chrono::high_resolution_clock::now();
-
-	// test_bitwise_not, bitwise_and, bitwise_and_eq, bitwise_xor, bitwise_xor_eq, bitwise_rshift,
-	// bitwise_rshift_eq, bitwise_lshift, bitwise_lshift_eq, bitwise_or, bitwise_or_eq
-	timer_starts[17] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_bitwise_not();
-	timer_ends[17] = std::chrono::high_resolution_clock::now();
-
-	timer_starts[18] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_bitwise_and();
-	timer_ends[18] = std::chrono::high_resolution_clock::now();
-
-	timer_starts[19] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_bitwise_and_eq();
-	timer_ends[19] = std::chrono::high_resolution_clock::now();
-
-	timer_starts[20] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_bitwise_xor();
-	timer_ends[20] = std::chrono::high_resolution_clock::now();
-
-	timer_starts[21] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_bitwise_xor_eq();
-	timer_ends[21] = std::chrono::high_resolution_clock::now();
-
-	timer_starts[22] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_bitwise_rshift();
-	timer_ends[22] = std::chrono::high_resolution_clock::now();
-
-	timer_starts[22] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_bitwise_rshift_eq();
-	timer_ends[22] = std::chrono::high_resolution_clock::now();
-
-	timer_starts[23] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_bitwise_lshift();
-	timer_ends[23] = std::chrono::high_resolution_clock::now();
-
-	timer_starts[24] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_bitwise_lshift_eq();
-	timer_ends[24] = std::chrono::high_resolution_clock::now();
-
-	timer_starts[25] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_bitwise_or();
-	timer_ends[25] = std::chrono::high_resolution_clock::now();
-
-	timer_starts[26] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_bitwise_or_eq();
-	timer_ends[26] = std::chrono::high_resolution_clock::now();
-
-	// test_addition, test_addition_eq, test_subtraction, test_subtraction_eq, test_mul, test_mul_eq, test_div, test_div_eq, test_mod, test_mod_eq, test_pow
-	timer_starts[27] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_addition();
-	timer_ends[27] = std::chrono::high_resolution_clock::now();
-
-	timer_starts[28] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_addition_eq();
-	timer_ends[28] = std::chrono::high_resolution_clock::now();
-
-	timer_starts[29] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_subtraction();
-	timer_ends[29] = std::chrono::high_resolution_clock::now();
-
-	timer_starts[30] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_subtraction_eq();
-	timer_ends[30] = std::chrono::high_resolution_clock::now();
-
-	timer_starts[31] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_mul();
-	timer_ends[31] = std::chrono::high_resolution_clock::now();
-
-	timer_starts[32] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_mul_eq();
-	timer_ends[32] = std::chrono::high_resolution_clock::now();
-
-	timer_starts[33] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_div();
-	timer_ends[33] = std::chrono::high_resolution_clock::now();
-
-	timer_starts[34] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_div_eq();
-	timer_ends[34] = std::chrono::high_resolution_clock::now();
-
-	timer_starts[35] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_mod();
-	timer_ends[35] = std::chrono::high_resolution_clock::now();
-
-	timer_starts[36] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_mod_eq();
-	timer_ends[36] = std::chrono::high_resolution_clock::now();
-
-	timer_starts[37] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_pow();
-	timer_ends[37] = std::chrono::high_resolution_clock::now();
-
-	// test_inc, test_dec
-	timer_starts[38] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_inc();
-	timer_ends[38] = std::chrono::high_resolution_clock::now();
-
-	timer_starts[39] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_dec();
-	timer_ends[39] = std::chrono::high_resolution_clock::now();
-
-	// test_index_bit, test_index_uint64
-	timer_starts[40] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_index_bit();
-	timer_ends[40] = std::chrono::high_resolution_clock::now();
-
-	timer_starts[41] = std::chrono::high_resolution_clock::now();
-	for(uint32_t i=0;i<count;i++) benchmarker.test_index_uint64();
-	timer_ends[41] = std::chrono::high_resolution_clock::now();
-
-	for(uint16_t i=0;i<sizeof(timer_starts)/sizeof(timer_starts[0]);i++) {
-		auto timer = timer_ends[i]-timer_starts[i];
+	for(uint16_t i=0;i<sizeof(benchmarker.timer_starts)/sizeof(benchmarker.timer_starts[0]);i++) {
+		auto timer = (benchmarker.timer_ends[i]-benchmarker.timer_starts[i])/count; // divide by 100 because count = 100
   		std::chrono::microseconds micro = std::chrono::duration_cast< std::chrono::microseconds >( timer );
   		std::chrono::milliseconds mili = std::chrono::duration_cast< std::chrono::milliseconds >( timer );
   		std::chrono::seconds second = std::chrono::duration_cast< std::chrono::seconds >( timer );

@@ -461,15 +461,21 @@ namespace BigInt
 			BigUint<bitsize> d = num;
 			BigUint<bitsize> current = 1;
 			BigUint<bitsize> ret = 0;
-			if (d > *this) {
+
+			// make copy of *this
+			uint64_t o[op_size];
+			for(uint16_t i=0;i<op_size;i++) o[i] = op[i];
+			BigUint<bitsize> new_op = BigUint<bitsize>(o, op_size);
+
+			if (d > new_op) {
 				return 0;
 			}
 
-			if (d == *this) {
+			if (d == new_op) {
 				return 1;
 			}
 
-			while (d < *this) {
+			while (d < new_op) {
 				d <<= 1;
 				current <<= 1;
 			}
@@ -478,8 +484,8 @@ namespace BigInt
 			current >>= 1;
 
 			while(current != "0") {
-				if(*this > d) {
-					*this -= d;
+				if(new_op > d) {
+					new_op -= d;
 					ret |= current;
 				}
 				current >>= 1;
@@ -492,6 +498,25 @@ namespace BigInt
 	constexpr BigUint<bitsize> BigUint<bitsize>::operator/=(const BigUint &num)
 	{
 		*this = *this / num;
+		return *this;
+	}
+
+	template<uint16_t bitsize>
+	[[nodiscard("discarded BigUint operator%")]]
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator%(const BigUint &num)
+	{
+		// make copy of *this
+		uint64_t o[op_size];
+		for(uint16_t i=0;i<op_size;i++) o[i] = num.op[i];
+		BigUint<bitsize> new_op = BigUint<bitsize>(o, op_size);
+		return *this - (*this / new_op) * new_op;
+		//a % b = a - (b * int(a/b))
+	}
+
+	template<uint16_t bitsize>
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator%=(const BigUint &num)
+	{
+		*this = *this % num;
 		return *this;
 	}
 

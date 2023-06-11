@@ -26,6 +26,9 @@ int main()
 	std::cout << "\nnum * 200: " << num.to<256>() * uint256_t(200);
 	std::cout << "\nnum / 2: " << (num / uint256_t(2));
 	std::cout << "\nnum % 20000: " << (num % uint256_t(20000));
+	std::cout << "\npow(num, 2): " << pow(num, uint256_t(2));
+	BigUint<256> a = "2"; // 32768
+	std::cout << "\npow: " << pow(a, BigUint<256>(3));
 	std::cout << std::endl;
 	return 0;
 }

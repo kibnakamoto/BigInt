@@ -107,8 +107,8 @@ namespace BigInt
 			constexpr BigUint operator%(const BigUint &num);
 			constexpr BigUint operator%=(const BigUint &num);
 
-			constexpr BigUint operator++();
-			constexpr BigUint operator--();
+			constexpr BigUint operator++(int);
+			constexpr BigUint operator--(int);
 			constexpr bool operator[](const uint32_t &index) const; // access specific bit of the number
 			constexpr uint64_t operator[](const uint16_t &index) const; // access specific 64-bit op index
 	
@@ -126,15 +126,15 @@ namespace BigInt
 			constexpr BigUint operator|=(const BigUint &num);
 	
 			// boolean operators
-			constexpr bool operator&&(const BigUint &num);
-			constexpr bool operator||(const BigUint &num);
-			constexpr bool operator==(const BigUint &num);
-			constexpr bool operator!();
-			constexpr bool operator!=(const BigUint &num);
-			constexpr bool operator<(const BigUint &num);
-			constexpr bool operator<=(const BigUint &num);
-			constexpr bool operator>(const BigUint &num);
-			constexpr bool operator>=(const BigUint &num);
+			constexpr bool operator&&(BigUint num) const;
+			constexpr bool operator||(BigUint num) const;
+			constexpr bool operator==(const BigUint &num) const;
+			constexpr bool operator!() const;
+			constexpr bool operator!=(const BigUint &num) const;
+			constexpr bool operator<(const BigUint &num) const;
+			constexpr bool operator<=(const BigUint &num) const;
+			constexpr bool operator>(const BigUint &num) const;
+			constexpr bool operator>=(const BigUint &num) const;
 			
 			// delete operators for deleting run-time objects
 			inline void operator delete(void *dat); // delete object itself
@@ -327,6 +327,9 @@ namespace BigInt
 		input = num;
 		return cin;
 	}
+
+	template<uint16_t bitsize>
+	BigUint<bitsize> pow(BigUint<bitsize> base, BigUint<bitsize> exp);
 	
 	using uint192_t = BigUint<192>;
 	using uint256_t = BigUint<256>;

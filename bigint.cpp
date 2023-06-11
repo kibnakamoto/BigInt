@@ -191,17 +191,17 @@ namespace BigInt
 	
 	template<uint16_t bitsize>
 	[[nodiscard("discarded BigUint boolean and operator&&")]]
-	constexpr bool BigUint<bitsize>::operator&&(const BigUint &num)
+	constexpr bool BigUint<bitsize>::operator&&(BigUint num) const
 	{
-		if (*this == 0 or num == 0) return 0;
+		if (*this == "0" or num == "0") return 0;
 		return 1;
 	}
 	
 	template<uint16_t bitsize>
 	[[nodiscard("discarded BigUint boolean or operator||")]]
-	constexpr bool BigUint<bitsize>::operator||(const BigUint &num)
+	constexpr bool BigUint<bitsize>::operator||(BigUint num) const
 	{
-		if (*this == 0 and num == 0) return 0;
+		if (*this == "0" and num == "0") return 0;
 		return 1;
 	}
 	
@@ -209,7 +209,7 @@ namespace BigInt
 	#pragma GCC diagnostic ignored "-Wc++17-extensions"
 	template<uint16_t bitsize>
 	[[nodiscard("discarded BigUint boolean equal to operator==")]]
-	constexpr bool BigUint<bitsize>::operator==(const BigUint &num)
+	constexpr bool BigUint<bitsize>::operator==(const BigUint &num) const
 	{
 		bool equal = 0;
 		if constexpr(op_size >= num.op_size) {
@@ -226,7 +226,7 @@ namespace BigInt
 	// check if initialized and not zero
 	template<uint16_t bitsize>
 	[[nodiscard("discarded BigUint boolean not operator!")]]
-	constexpr bool BigUint<bitsize>::operator!()
+	constexpr bool BigUint<bitsize>::operator!() const
 	{
 		bool notzero = 0;
 		for(uint16_t i=0;i<op_size;i++) {
@@ -243,7 +243,7 @@ namespace BigInt
 	#pragma GCC diagnostic ignored "-Wc++17-extensions"
 	template<uint16_t bitsize>
 	[[nodiscard("discarded BigUint boolean not equal to operator!=")]]
-	constexpr bool BigUint<bitsize>::operator!=(const BigUint &num)
+	constexpr bool BigUint<bitsize>::operator!=(const BigUint &num) const
 	{
 		bool notequal = 0;
 		if constexpr(op_size >= num.op_size) {
@@ -261,7 +261,7 @@ namespace BigInt
 	
 	template<uint16_t bitsize>
 	[[nodiscard("discarded BigUint boolean less than operator<")]]
-	constexpr bool BigUint<bitsize>::operator<(const BigUint &num)
+	constexpr bool BigUint<bitsize>::operator<(const BigUint &num) const
 	{
 		bool less = 0;
 	
@@ -280,7 +280,7 @@ namespace BigInt
 	}
 	
 	template<uint16_t bitsize>
-	constexpr bool BigUint<bitsize>::operator<=(const BigUint &num)
+	constexpr bool BigUint<bitsize>::operator<=(const BigUint &num) const
 	{
 		bool less = 0; // or equal
 	
@@ -299,7 +299,7 @@ namespace BigInt
 	
 	template<uint16_t bitsize>
 	[[nodiscard("discarded BigUint greater operator>")]]
-	constexpr bool BigUint<bitsize>::operator>(const BigUint &num)
+	constexpr bool BigUint<bitsize>::operator>(const BigUint &num) const
 	{
 		bool greater = 0; // or equal
 	
@@ -318,7 +318,7 @@ namespace BigInt
 	}
 	
 	template<uint16_t bitsize>
-	constexpr bool BigUint<bitsize>::operator>=(const BigUint &num)
+	constexpr bool BigUint<bitsize>::operator>=(const BigUint &num) const
 	{
 		bool greater = 0; // or equal
 	
@@ -510,7 +510,6 @@ namespace BigInt
 		for(uint16_t i=0;i<op_size;i++) o[i] = num.op[i];
 		BigUint<bitsize> new_op = BigUint<bitsize>(o, op_size);
 		return *this - (*this / new_op) * new_op;
-		//a % b = a - (b * int(a/b))
 	}
 
 	template<uint16_t bitsize>
@@ -521,34 +520,16 @@ namespace BigInt
 	}
 
 	template<uint16_t bitsize>
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator++()
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator++(int)
 	{
-		for(uint16_t i=op_size;i --> 0;) {
-			if(op[i] != UINT64_MAX) op[i]++;
-			else {
-				if(i != 0) continue;
-				else {
-					for(uint16_t j=0;j<op_size;j++) op[j] = 0x0000000000000000ULL;
-					break;
-				}
-			}
-		}
+		*this += 1;
 		return *this;
 	}
 
 	template<uint16_t bitsize>
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator--()
+	constexpr BigUint<bitsize> BigUint<bitsize>::operator--(int)
 	{
-		for(uint16_t i=0;i<op_size;i++) {
-			if(op[i] != 0) op[i]--;
-			else {
-				if(i != op_size-1) continue;
-				else {
-					for(uint16_t j=0;j<op_size;j++) op[j] = 0xffffffffffffffffULL;
-					break;
-				}
-			}
-		}
+		*this -= 1;
 		return *this;
 	}
 
@@ -732,6 +713,30 @@ namespace BigInt
 		// assuming they are the same size. Which should be enforced by compiler by default
 		for(uint16_t i=0;i<op_size;i++)  op[i] |= num.op[i];
 		return *this;
+	}
+
+	template<uint16_t bitsize>
+	BigUint<bitsize> pow(BigUint<bitsize> base, BigUint<bitsize> exp)
+	{
+
+		BigUint<bitsize> ret = 1;
+		for(BigUint<bitsize> i=0;i<exp;i++) {
+			ret *= base;
+		}
+		return ret;
+		//BigUint<bitsize> q = exp;
+		//BigUint<bitsize> prod = 1;
+		//BigUint<bitsize> current = base;
+		//while(q > "0") {
+		//	if(q & "1") {
+		//		prod *= current;
+		//		q-=1;
+		//	}
+		//	current *= current;
+		//	q /= 2;
+		//}
+		//
+		//return prod;
 	}
 }; /* NAMESPACE BIGINT */
 

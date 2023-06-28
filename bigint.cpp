@@ -343,8 +343,8 @@ namespace BigInt
 		uint64_t new_op[op_size];
 		uint64_t tmp_op[op_size];
 		std::copy(std::begin(op), std::end(op), std::begin(tmp_op)); // set to op
+		for(uint16_t i=op_size;i --> 0;) {new_op[i] = 0; }
 		for(uint16_t i=op_size;i --> 0;) {
-			new_op[i] = 0;
 			__uint128_t tmp = tmp_op[i];
 			tmp += num.op[i];
 			if(tmp > UINT64_MAX) {

@@ -1,8 +1,9 @@
 # Big Integer Library in C++
 
-Current Status: Early Development
+The library is optmized for C++23 and the benchmark tests prove that certain things like addition work in nanoseconds which is extremely fast.
 
-The assignment operator only takes a hex string
+Around 11 constructors and functions for input. Including Consteval input. Use the test file for reference when wondering how to use.
+
+Garunteed to work for the following supported bitsizes: 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384.
 
 
-NOTES: valgrind gives 8 errors relating to uninitilized variables. This isn't about constructors or functions. It is the cout operator when printing num1, num2. Ignore Valgrind

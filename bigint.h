@@ -11,7 +11,6 @@
 #include <type_traits>
 #include <iostream>
 
-// TODO: define exponents
 // To define operations for all types instead of just multiples of 64. Calculate 2**bitsize (in 64-bit segments), every 64-bit segment is the modulo instead of UINT64_MAX, meaning replace UINT64_MAX WITH 2**bitsize
 
 namespace BigInt
@@ -52,8 +51,6 @@ namespace BigInt
 				for(uint16_t i=start;i<width;i++) substr += str[i];
 				return substr;
 			}
-			inline uint64_t rotr(uint64_t x, unsigned int n) { return (x >> n)|(x << ((sizeof(x)<<3)-n)); }
-			inline uint64_t rotl(uint64_t x, unsigned int n) { return (x << n)|(x >> ((sizeof(x)<<3)-n)); }
 
 		public:
 			#pragma GCC diagnostic push

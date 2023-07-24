@@ -30,8 +30,10 @@ all: ${BIGINT} ${TEST}
 	${CXX} ${TEST_CXXFLAGS} -c ${TEST} -o ${TEST_OBJ}
 	${CXX} bigint.o test.o -o ${TEST_EXEC}
 
-run-bigint: ${BIGINT_CPP}
+run-bigint: ${BIGINT}
 	${CXX} ${CXXFLAGS} ${CPP} -o ${EXEC} && ./bigint
 
-run-test: ${TEST}
-	${CXX} ${TEST_CXXFLAGS} ${CPP} ${TEST} -o ${TEST_EXEC} && ./test
+run-test: ${TEST} ${BIGINT}
+	${CXX} ${CXXFLAGS} -c ${BIGINT_CPP} -o ${BIGINT_OBJ}
+	${CXX} ${TEST_CXXFLAGS} -c ${TEST} -o ${TEST_OBJ}
+	${CXX} bigint.o test.o -o ${TEST_EXEC} && ./test

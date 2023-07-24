@@ -891,14 +891,14 @@ class Benchmark
 
 int main()
 {
-	constexpr const static uint16_t bitsize = 256;
+	constexpr const static uint16_t bitsize = 512;
 	static uint32_t count=1;
 	Test<bitsize> tester = Test<bitsize>();
 
 	/************* VALUE TESTS *************/
 	// value tests can be done at your own pace, test a function by calling tester.<function-name>().
 	
-	std::string all_functions[42] = {"test_chararr_assignment", "test_str_assignment", "test_long_chararr_assignment", "test_long_str_assignment", "test_long_hex_assignment", "test_int_assignment", "test_long_int_assignment", "test_bool_and", "test_bool_or", "test_bool_equal_eq", "test_bool_not", "test_bool_not_eq", "test_bool_less", "test_bool_less_eq", "test_bool_greater", "test_bool_greater_eq", "test_bitwise_not", "bitwise_and", "bitwise_and_eq", "bitwise_xor", "bitwise_xor_eq", "bitwise_rshift", "bitwise_rshift_eq", "bitwise_lshift", "bitwise_lshift_eq", "bitwise_or", "bitwise_or_eq", "test_addition", "test_addition_eq", "test_subtraction", "test_subtraction_eq", "test_mul", "test_mul_eq", "test_div", "test_div_eq", "test_mod", "test_mod_eq", "test_pow", "test_inc", "test_dec", "test_index_bit", "test_index_uint64"};
+	std::string all_functions[42] = {"test_chararr_assignment =", "test_str_assignment =", "test_long_chararr_assignment =", "test_long_str_assignment =", "test_long_hex_assignment =", "test_int_assignment =", "test_long_int_assignment =", "test_bool_and &&", "test_bool_or ||", "test_bool_equal_eq ==", "test_bool_not !", "test_bool_not_eq !=", "test_bool_less <", "test_bool_less_eq <=", "test_bool_greater >", "test_bool_greater_eq >=", "test_bitwise_not ~", "bitwise_and &", "bitwise_and_eq &=", "bitwise_xor ^", "bitwise_xor_eq ^=", "bitwise_rshift >>", "bitwise_rshift_eq >>=", "bitwise_lshift <<", "bitwise_lshift_eq <<=", "bitwise_or |", "bitwise_or_eq |=", "test_addition +", "test_addition_eq +=", "test_subtraction -", "test_subtraction_eq -=", "test_mul *", "test_mul_eq *=", "test_div /", "test_div_eq /=", "test_mod %", "test_mod_eq %=", "test_pow pow()", "test_inc ++", "test_dec --", "test_index_bit []", "test_index_uint64 []"};
 
 	/************* BENCHMARK TESTS *************/
 	Benchmark<bitsize> benchmarker = Benchmark<bitsize>();

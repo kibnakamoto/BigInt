@@ -388,11 +388,13 @@ namespace BigInt
 			if(tmp > UINT64_MAX) {
 	    		new_op[i] += tmp & UINT64_MAX; // assign the main value to assign value with no carry (only no carry because of bit-shifting)
 				bitsize_t j = 1;
-				while(new_op[i-j] == UINT64_MAX and i+j < op_size-1) {
-	    			tmp_op[i-j]++; // carry
-					j++;
+				if(j <= i) {
+					while(new_op[i-j] == UINT64_MAX) {
+	    				tmp_op[i-j]++; // carry
+						j++;
+					}
+	    			tmp_op[i-j]++;
 				}
-	    		tmp_op[i-j]++;
 			} else {
 				new_op[i] += tmp;
 			}
@@ -448,7 +450,7 @@ namespace BigInt
 			if (new_op[i] < num.op[i]) {
 				ret[i] = new_op[i]-num.op[i];
 				bitsize_t j=1;
-				while(new_op[i-j] == 0 and i-j > 0) {
+				while(i-j > 0 and new_op[i-j] == 0) {
 					new_op[i-j]--; // carry
 					j++;
 				}
@@ -471,7 +473,7 @@ namespace BigInt
 			if (op[i] < num.op[i]) {
 				op[i] -= num.op[i];
 				bitsize_t j=1;
-				while(op[i-j] == 0 and i-j > 0) {
+				while(i-j > 0 and op[i-j] == 0) {
 					op[i-j]--; // carry
 					j++;
 				}

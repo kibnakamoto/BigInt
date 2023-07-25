@@ -10,10 +10,14 @@
 #include <bitset>
 #include <sstream>
 #include <cassert>
+#include <memory>
 
 #include "bigint.h"
 
 // NOTE: all operators work for the same op size. Maybe remove the conditions that define it otherwise
+
+// TODO: change ret pointers to smart pointers (unieqe_ptr or shared_ptr)
+// TODO: for shifting operators: make sure to make everything heap memory
 
 namespace BigInt
 {
@@ -376,7 +380,7 @@ namespace BigInt
 		uint64_t *tmp_op = new uint64_t[op_size*8];
 		memcpy(tmp_op, op, 8*op_size); // if ptr: set to op
 		//std::copy(std::begin(op), std::end(op), std::begin(tmp_op)); // if array: set to op
-		for(bitsize_t i=0;i<op_size;i++) new_op[i] = 0; // for debugging valgrind error, initialize new_op to zero first
+		//for(bitsize_t i=0;i<op_size;i++) new_op[i] = 0; // for debugging valgrind error, initialize new_op to zero first
 		
 		for(bitsize_t i=op_size;i --> 0;) {
 			__uint128_t tmp = tmp_op[i];
@@ -394,8 +398,10 @@ namespace BigInt
 			}
 		}
 	
+		auto newint = BigUint<bitsize>(new_op, op_size);
 		delete[] tmp_op;
-		return BigUint<bitsize>(new_op, op_size);
+		free(new_op);
+		return newint;
 	}
 
 	template<typename bitsize_t>
@@ -403,6 +409,7 @@ namespace BigInt
 	constexpr SelectType<bitsize_t>::BigUint<bitsize> SelectType<bitsize_t>::BigUint<bitsize>::operator+=(const BigUint &num)
 	{
 		uint64_t *tmp_op = new uint64_t[op_size];
+		//uint64_t tmp_op[op_size];
 		memcpy(tmp_op, op, op_size*8); // if ptr: set to op
 		// std::copy(std::begin(op), std::end(op), std::begin(tmp_op)); // if array: set to op
 		for(bitsize_t i=op_size;i --> 0;) {
@@ -421,7 +428,7 @@ namespace BigInt
 				op[i] += tmp;
 			}
 		}
-		//delete[] tmp_op;
+
 		return *this;
 	}
 
@@ -448,8 +455,10 @@ namespace BigInt
 				ret[i] = new_op[i] - num.op[i];
 			}
 		}
+		auto newint = BigUint<bitsize>(ret, op_size);
 		delete[] new_op;
-		return BigUint<bitsize>(ret, op_size);
+		delete[] ret;
+		return newint;
 	}
 
 	template<typename bitsize_t>
@@ -558,7 +567,8 @@ namespace BigInt
 	{
 		// make copy of *this
 		uint64_t *o = new uint64_t[op_size];
-		for(bitsize_t i=0;i<op_size;i++) o[i] = num.op[i];
+		memcpy(o, num.op, 8*op_size);
+		// for(bitsize_t i=0;i<op_size;i++) o[i] = num.op[i]; // for array
 		BigUint<bitsize> new_op = BigUint<bitsize>(o, op_size);
 		delete[] o;
 		return *this - (*this / new_op) * new_op;
@@ -608,7 +618,9 @@ namespace BigInt
 	{
 		uint64_t *ret = new uint64_t[op_size];
 		for(bitsize_t i=0;i<op_size;i++)  ret[i] = ~op[i];
-		return BigUint<bitsize>(ret, op_size);
+		auto newint = BigUint<bitsize>(ret, op_size);
+		delete[] ret;
+		return newint;
 	}
 
 	template<typename bitsize_t>
@@ -618,7 +630,9 @@ namespace BigInt
 	{
 		uint64_t *ret = new uint64_t[op_size];
 		for(bitsize_t i=0;i<op_size;i++)  ret[i] = op[i] & num.op[i];
-		return BigUint<bitsize>(ret, op_size);
+		auto newint = BigUint<bitsize>(ret, op_size);
+		delete[] ret;
+		return newint;
 	}
 
 	template<typename bitsize_t>
@@ -638,7 +652,9 @@ namespace BigInt
 		// assuming they are the same size. Which should be enforced by compiler by default
 		uint64_t *ret = new uint64_t[op_size];
 		for(bitsize_t i=0;i<op_size;i++)  ret[i] = op[i] ^ num.op[i];
-		return BigUint<bitsize>(ret, op_size);
+		auto newint = BigUint<bitsize>(ret, op_size);
+		delete[] ret;
+		return newint;
 	}
 
 	template<typename bitsize_t>
@@ -676,7 +692,9 @@ namespace BigInt
 			ret[i] = buffer.to_ullong();
 		}
 
-		return BigUint<bitsize>(ret, op_size);
+		auto newint = BigUint<bitsize>(ret, op_size);
+		delete[] ret;
+		return newint;
 	}
 
 	template<typename bitsize_t>
@@ -730,7 +748,9 @@ namespace BigInt
 			std::bitset<64> buffer(str.substr(i*64, i*64+64));
 			ret[i] = buffer.to_ullong();
 		}
-		return BigUint<bitsize>(ret, op_size);
+		auto newint = BigUint<bitsize>(ret, op_size);
+		delete[] ret;
+		return newint;
 	}
 
 	template<typename bitsize_t>
@@ -768,7 +788,9 @@ namespace BigInt
 		// assuming they are the same size. Which should be enforced by compiler by default
 		uint64_t *ret = new uint64_t[op_size];
 		for(bitsize_t i=0;i<op_size;i++)  ret[i] = op[i] | num.op[i];
-		return BigUint<bitsize>(ret, op_size);
+		auto newint = BigUint<bitsize>(ret, op_size);
+		delete[] ret;
+		return newint;
 	}
 
 	template<typename bitsize_t>

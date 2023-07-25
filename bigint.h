@@ -195,6 +195,7 @@ namespace BigInt
 						}
 					}
 					auto new_obj = BigUint<n>(num, new_op_size);
+					delete[] num;
 					return new_obj;
 				}
 		

@@ -211,8 +211,8 @@ namespace BigInt
 	[[nodiscard("discarded BigUint assignment operator")]]
 	constexpr SelectType<bitsize_t>::BigUint<bitsize> SelectType<bitsize_t>::BigUint<bitsize>::operator=(const char* &num)
 	{
-		delete *this;
-		return BigUint<bitsize>(num); // reconstruct as new object
+		*this = BigUint<bitsize>(num);
+		return *this; // reconstruct as new object
 	}
 	
 	template<typename bitsize_t>
@@ -419,16 +419,18 @@ namespace BigInt
 			if(tmp > UINT64_MAX) {
 	    		op[i] = tmp & UINT64_MAX; // assign the main value to assign value with no carry (only no carry because of bit-shifting)
 				bitsize_t j = 1;
-				while(op[i-j] == UINT64_MAX and i+j < op_size-1) { // carry index
+				if(j <= i) {
+					while(op[i-j] == UINT64_MAX) { // carry index
+	    				tmp_op[i-j]++; // carry
+						j++;
+					}
 	    			tmp_op[i-j]++; // carry
-					j++;
 				}
-	    		tmp_op[i-j]++; // carry
 			} else {
 				op[i] += tmp;
 			}
 		}
-
+		delete[] tmp_op;
 		return *this;
 	}
 

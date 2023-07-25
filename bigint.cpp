@@ -10,14 +10,14 @@
 #include <bitset>
 #include <sstream>
 #include <cassert>
-#include <memory>
+#include <vector>
+
 
 #include "bigint.h"
 
 // NOTE: all operators work for the same op size. Maybe remove the conditions that define it otherwise
 
-// TODO: change ret pointers to smart pointers (unieqe_ptr or shared_ptr)
-// TODO: for shifting operators: make sure to make everything heap memory
+// TODO: for shifting operators: make sure it's using stack when smaller than stacksize, else use heap. Currently only at heap
 
 namespace BigInt
 {
@@ -686,10 +686,20 @@ namespace BigInt
 			std::bitset<64> tmp(op[i]);
 			buf << tmp.to_string();
 		}
-		std::bitset<bitsize> bits(buf.str());
-		bits >>= num;
+
+		// if bitsize is larger than 2^19 bytes, don't use stack
+		std::string str;
+		if constexpr(bitsize >= 4194304) {
+			std::bitset<bitsize> *bits = new std::bitset<bitsize>(buf.str());
+			*bits >>= num;
+			str = (*bits).to_string();
+			delete bits;
+		} else {
+			std::bitset<bitsize> bits(buf.str());
+			bits >>= num;
+			str = (bits).to_string();
+		}
 		buf.clear();
-		std::string str = bits.to_string();
 		std::string out = "";
 		for(bitsize_t i=0;i<op_size;i++) {
 			std::bitset<64> buffer(str.substr(i*64, i*64+64));
@@ -714,16 +724,24 @@ namespace BigInt
 			std::bitset<64> tmp(op[i]);
 			buf << tmp.to_string();
 		}
-		std::bitset<bitsize> bits(buf.str());
-		bits >>= num;
+		// if bitsize is larger than 2^19 bytes, don't use stack
+		std::string str;
+		if constexpr(bitsize >= 4194304) {
+			std::bitset<bitsize> *bits = new std::bitset<bitsize>(buf.str());
+			*bits >>= num;
+			str = (*bits).to_string();
+			delete bits;
+		} else {
+			std::bitset<bitsize> bits(buf.str());
+			bits >>= num;
+			str = (bits).to_string();
+		}
 		buf.clear();
-		std::string str = bits.to_string();
 		std::string out = "";
 		for(bitsize_t i=0;i<op_size;i++) {
 			std::bitset<64> buffer(str.substr(i*64, i*64+64));
 			op[i] = buffer.to_ullong();
 		}
-
 		return *this;
 	}
 
@@ -743,10 +761,19 @@ namespace BigInt
 			std::bitset<64> tmp(op[i]);
 			buf << tmp.to_string();
 		}
-		std::bitset<bitsize> bits(buf.str());
-		bits <<= num;
+		// if bitsize is larger than 2^19 bytes, don't use stack
+		std::string str;
+		if constexpr(bitsize >= 4194304) {
+			std::bitset<bitsize> *bits = new std::bitset<bitsize>(buf.str());
+			*bits <<= num;
+			str = (*bits).to_string();
+			delete bits;
+		} else {
+			std::bitset<bitsize> bits(buf.str());
+			bits <<= num;
+			str = (bits).to_string();
+		}
 		buf.clear();
-		std::string str = bits.to_string();
 		std::string out = "";
 		for(bitsize_t i=0;i<op_size;i++) {
 			std::bitset<64> buffer(str.substr(i*64, i*64+64));
@@ -770,10 +797,18 @@ namespace BigInt
 			std::bitset<64> tmp(op[i]);
 			buf << tmp.to_string();
 		}
-		std::bitset<bitsize> bits(buf.str());
-		bits <<= num;
+		std::string str;
+		if constexpr(bitsize >= 4194304) {
+			std::bitset<bitsize> *bits = new std::bitset<bitsize>(buf.str());
+			*bits <<= num;
+			str = (*bits).to_string();
+			delete bits;
+		} else {
+			std::bitset<bitsize> bits(buf.str());
+			bits <<= num;
+			str = (bits).to_string();
+		}
 		buf.clear();
-		std::string str = bits.to_string();
 		std::string out = "";
 		for(bitsize_t i=0;i<op_size;i++) {
 			std::bitset<64> buffer(str.substr(i*64, i*64+64));

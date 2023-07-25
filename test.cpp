@@ -890,7 +890,7 @@ class Benchmark
 int main()
 {
 	typedef uint32_t bitsize_t;
-	constexpr const static bitsize_t bitsize = 2147483648; // doesn't always work, check rand_str generation
+	constexpr const static bitsize_t bitsize = 256; // 2147483648; // doesn't always work, check rand_str generation
 	typedef LargeUint<bitsize> biguint_t;
 	static uint32_t count=100;
 

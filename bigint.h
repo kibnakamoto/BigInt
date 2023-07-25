@@ -267,19 +267,39 @@ namespace BigInt
 				{
 					constexpr const bool base8 = base==8;
 					constexpr const bool base16 = base==16;
-		   			const size_t len = strlen(input);
-					// TODO: check if input length is in range of operator array length, if it's not generate compile time warning
+		   			size_t len = strlen(input);
+					// TODO: check if input length is in range of operator array length, if it's not generate error
+					constexpr const static __uint128_t hex_len_op = op_size*16;
+					constexpr const static __uint128_t oct_len_op = op_size*8;
 		
 					if constexpr(base16 or base8) {
 						if constexpr(base16) {
 							rm_trailhex(input); // remove trailing character if it exists
+							if(len >= hex_len_op) {
+								auto num = std::string(input).erase(hex_len_op, len-hex_len_op); // prune to hex_len_op
+								input = num.c_str();
+								len = strlen(input);
+							} // compare byte size
 							hexoct_to_bigint(input, len, 16);
 						} else { // base 8
+							if(len >= oct_len_op) {
+								auto num = std::string(input).erase(oct_len_op, len-oct_len_op); // prune to hex_len_op
+								input = num.c_str();
+								len = strlen(input);
+							} // compare byte size
 							hexoct_to_bigint(input, len, 8);
 						}
 					} else {
 		   				bool hex_input = input_hex(input, len);
-						if(hex_input) hexoct_to_bigint(input, len, 16);
+						if(hex_input) {
+							if(len >= hex_len_op) {
+								auto num = std::string(input).erase(hex_len_op, len-hex_len_op); // prune to hex_len_op
+								input = num.c_str();
+								len = strlen(input);
+								
+							} // compare byte size
+							hexoct_to_bigint(input, len, 16);
+						}
 						else throw wrong_type_error("string or const char* input has to be hex");
 					}
 				}

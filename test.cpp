@@ -910,15 +910,18 @@ int main()
 	}
 
 
+	uint64_t total_time_bench = 0;
 	for(uint16_t i=0;i<sizeof(benchmarker.timer_starts)/sizeof(benchmarker.timer_starts[0]);i++) {
-		auto timer = (benchmarker.timer_ends[i]-benchmarker.timer_starts[i])/count; // divide by 100 because count = 100
+		auto timer = (benchmarker.timer_ends[i]-benchmarker.timer_starts[i]);///count; // divide by count to get average
   		std::chrono::microseconds micro = std::chrono::duration_cast< std::chrono::microseconds >( timer );
   		std::chrono::milliseconds mili = std::chrono::duration_cast< std::chrono::milliseconds >( timer );
   		std::chrono::seconds second = std::chrono::duration_cast< std::chrono::seconds >( timer );
+		total_time_bench+=timer.count();
 
 		std::cout << "\nfunction: " << all_functions[i];
 		std::cout << "\ntimer = \t" << timer << "\t:\t" << micro << "\t:\t" << mili << "\t:\t" << second << "\t|" << std::endl;
 	}
+	std::cout << std::endl << "Total time: " << total_time_bench/1000 << "µs" << std::endl;
 
 	return 0;
 }

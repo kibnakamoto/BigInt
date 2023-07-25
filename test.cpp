@@ -889,7 +889,6 @@ class Benchmark
 
 int main()
 {
-	std::cout << std::endl << "nigga" << std::endl;
 	typedef uint32_t bitsize_t;
 	constexpr const static bitsize_t bitsize = 2147483648; // doesn't always work, check rand_str generation
 	typedef HugeUint<bitsize> biguint_t;

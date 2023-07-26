@@ -9,23 +9,30 @@
 #include <utility>
 #include <bitset>
 #include <sstream>
+#include <cassert>
+#include <vector>
+
 
 #include "bigint.h"
 
 // NOTE: all operators work for the same op size. Maybe remove the conditions that define it otherwise
 
+// TODO: for shifting operators: make sure it's using stack when smaller than stacksize, else use heap. Currently only at heap
+
 namespace BigInt
 {
-	template<uint16_t bitsize>
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
 	template<uint8_t base> // type of input (oct = base 8, hex = base 16)
-	BigUint<bitsize>::BigUint(std::string input)
+	SelectType<bitsize_t>::BigUint<bitsize>::BigUint(std::string input)
 	{
 		strtobigint<base>(input.c_str());
 	}
 	
-	template<uint16_t bitsize>
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
 	template<uint8_t base> // type of input (oct = base 8, hex = base 16)
-	BigUint<bitsize>::BigUint(const char* input)
+	SelectType<bitsize_t>::BigUint<bitsize>::BigUint(const char* input)
 	{
 		strtobigint<base>(input); // to avoid annoying C++ conversion error
 	}
@@ -36,15 +43,16 @@ namespace BigInt
 	#pragma GCC diagnostic ignored "-Wc++2b-extensions"
 	#pragma GCC diagnostic ignored "-Wc++17-extensions"
 	#pragma GCC diagnostic ignored "-Wvarargs"
-	template<uint16_t bitsize> 
-	constexpr BigUint<bitsize>::BigUint(const uint16_t count, __uint128_t ...) {
+	template<typename bitsize_t>
+	template<bitsize_t bitsize> 
+	constexpr SelectType<bitsize_t>::BigUint<bitsize>::BigUint(const bitsize_t count, __uint128_t ...) {
 		std::va_list args;
 		va_start(args, count);
 	
 		// pad the operator array
-		const uint16_t count64 = count << 1; // count if input is 64-bits
+		const bitsize_t count64 = count << 1; // count if input is 64-bits
 		op_nonleading_i = count64 < op_size? op_size-count64 : 0;
-		for(uint16_t i=0;i<=op_nonleading_i;i++) op[i] = 0x0000000000000000ULL;
+		for(bitsize_t i=0;i<=op_nonleading_i;i++) op[i] = 0x0000000000000000ULL;
 	
 		// add the inputs to the operator array
 	    for(size_t i=0;i<count;i++) {
@@ -56,21 +64,24 @@ namespace BigInt
 	}
 
 	// numerical input. If number is 256-bit, input = left 128-bit, right 128-bit, same as the function above except it's compile-time
-	template<uint16_t bitsize>
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
 	template<typename ...Ts> // all uint128_t, must specify
-	consteval BigUint<bitsize> BigUint<bitsize>::assign_conste(Ts... input) noexcept
+	consteval SelectType<bitsize_t>::BigUint<bitsize> SelectType<bitsize_t>::BigUint<bitsize>::assign_conste(Ts... input) noexcept
 	{
 		// pad the operator array
 		constexpr const size_t count = sizeof...(Ts);
-		const constexpr uint16_t count64 = count << 1; // count if input is 64-bits
+		const constexpr bitsize_t count64 = count << 1; // count if input is 64-bits
 		if constexpr(count64 < op_size)
 				op_nonleading_i = op_size-count64;
 		else
 			op_nonleading_i = 0;
-		for(uint16_t i=0;i<=op_nonleading_i;i++) op[i] = 0x0000000000000000ULL;
+
+		assert(op_nonleading_i < 262144); // if called, that means that bitsize is too large. Padding is too much for compile time. Try using non-compile-time function
+		for(bitsize_t i=0;i<op_nonleading_i;i++) op[i] = 0x0000000000000000ULL;
 	
 		// add the inputs to the operator array
-		uint16_t i=0;
+		bitsize_t i=0;
 	    for(const auto num : {input...}) {
 	        op[op_size-i*2-1] = num >> 64; ////////////////////// RECENT CHANGE - maybe change indexes if problem
 	        op[op_size-i*2-2] = num&bottom_mask_u128;
@@ -81,14 +92,15 @@ namespace BigInt
 	#pragma GCC diagnostic pop
 
 	// assignment to operator array of known length
-	template<uint16_t bitsize>
-	constexpr BigUint<bitsize>::BigUint(uint64_t *input, uint16_t len) // input order has to be: input[0] = most left 64-bit
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
+	constexpr SelectType<bitsize_t>::BigUint<bitsize>::BigUint(uint64_t *input, bitsize_t len) // input order has to be: input[0] = most left 64-bit
 	{
 		// calculate pad count
-		uint16_t pad_count;
+		bitsize_t pad_count;
 		if(len > op_size) { // if bigger integer type, and input array has non-zero number at the height of op
 			bool found = false;
-			for(uint16_t i=0;i<=op_size;i++) { // iterate to op_size because input array order is backwards
+			for(bitsize_t i=0;i<=op_size;i++) { // iterate to op_size because input array order is backwards
 				if(input[i] != 0)
 					found = true;
 			}
@@ -96,8 +108,8 @@ namespace BigInt
 				throw int_too_large_error(("given integer is too large for the defined BigUint<" + std::to_string(bitsize) +
 										  "> which is not enough to hold a value of BigUint<" + std::to_string(len*64) + ">").c_str());
 			} else {
-				uint16_t nonzeroi; // index of non-zero input element
-				for(uint16_t i=op_size+1;i<len;i++) { // basically continuation of previous loop
+				bitsize_t nonzeroi; // index of non-zero input element
+				for(bitsize_t i=op_size+1;i<len;i++) { // basically continuation of previous loop
 					if(input[i] != 0) {
 						nonzeroi=i;
 						break;
@@ -110,10 +122,10 @@ namespace BigInt
 	
 		}
 	    // pad the operator array
-	    for(uint16_t i=0;i<pad_count;i++) op[i] = 0x0000000000000000ULL;
+	    for(bitsize_t i=0;i<pad_count;i++) op[i] = 0x0000000000000000ULL;
 	
 	    // add input to operator array
-	    for(uint16_t i=op_size;i --> pad_count;) op[i] = input[i];
+	    for(bitsize_t i=op_size;i --> pad_count;) op[i] = input[i];
 		op_nonleading_i = pad_count;
 	}
 
@@ -122,84 +134,100 @@ namespace BigInt
 	#pragma GCC diagnostic push
 	#pragma GCC diagnostic ignored "-Wc++20-extensions" // not initialized on decleration on constexpr function
 	#pragma GCC diagnostic ignored "-Wc++17-extensions"
-	template<uint16_t bitsize>
-	template<uint16_t len, std::array<uint64_t, len> input>
-	consteval BigUint<bitsize> BigUint<bitsize>::assign_op() noexcept
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
+	template<bitsize_t len, std::array<uint64_t, len> input>
+	consteval SelectType<bitsize_t>::BigUint<bitsize> SelectType<bitsize_t>::BigUint<bitsize>::assign_op() noexcept
 	{
 		// calculate pad count
 		if(len > op_size) { // if bigger integer type, and input array has non-zero number at the height of op
 			bool found = false;
 
-			for(uint16_t i=0;i<=op_size;i++) { // iterate to op_size because input array order is backwards
+			for(bitsize_t i=0;i<=op_size;i++) { // iterate to op_size because input array order is backwards
 				if constexpr(input[i] != 0)
 					found = true;
 			}
 			if (found) { // maybe input[op_size] = 0 but input[op_size+1] !=0, therefore use the found defined above
 				throw int_too_large_error("given integer is too large for the defined BigUint");
 			} else {
-				uint16_t nonzeroi; // index of non-zero input element
-				for(uint16_t i=op_size+1;i<len;i++) { // basically continuation of previous loop
+				bitsize_t nonzeroi; // index of non-zero input element
+				for(bitsize_t i=op_size+1;i<len;i++) { // basically continuation of previous loop
 					if constexpr(input[i] != 0) {
 						nonzeroi=i;
 						break;
 					}
 				}
 	    		// pad the operator array
-	    		for(uint16_t i=0;i<nonzeroi;i++) op[i] = 0x0000000000000000ULL;
+	    		for(bitsize_t i=0;i<nonzeroi;i++) op[i] = 0x0000000000000000ULL;
 				op_nonleading_i = nonzeroi;
 
 	    		// add input to operator array
-	    		for(uint16_t i=op_size;i --> nonzeroi;) op[i] = input[i];
+	    		for(bitsize_t i=op_size;i --> nonzeroi;) op[i] = input[i];
 			}
 		} else {
-			const uint16_t constexpr pad_count = len-op_size;
+			const bitsize_t constexpr pad_count = len-op_size;
 
 	    	// pad the operator array
-	    	for(uint16_t i=0;i<pad_count;i++) op[i] = 0x0000000000000000ULL;
+	    	for(bitsize_t i=0;i<pad_count;i++) op[i] = 0x0000000000000000ULL;
 	
 	    	// add input to operator array
-	    	for(uint16_t i=op_size;i --> pad_count;) op[i] = input[i];
+	    	for(bitsize_t i=op_size;i --> pad_count;) op[i] = input[i];
 		}
 		return *this;
 	}
 	#pragma GCC diagnostic pop
-	
-	//#pragma GCC diagnostic push
-	//#pragma GCC diagnostic ignored "-Wtype-limits"
-	//template<uint16_t bitsize>
-	//BigUint<bitsize> BigUint<bitsize>::operator=(const BigUint &num)
-	//{
-	//	// assign non-leading-zero elements of the operator array
-	//	if(num.op_size <= op_size) {
-	//		for(uint16_t i=0;i<num.op_size;i++) op[i] = num.op[i];
-	//		for(uint16_t i=num.op_size;i<op_size;i++) op[i] = num.op[i]; // op_size is bigger than num.op_size, pad op
-	//	} else {
-	//		for(uint16_t i=num.op_size;i>0;i++) op[i] = num.op[i];
-	//		for(uint16_t i=num.op_size;i<op_size;i++) op[i] = num.op[i];
-	//	}
-	//	return *this;
-	//}
-	//#pragma GCC diagnostic pop
-	
-	template<uint16_t bitsize>
-	[[nodiscard("discarded BigUint assignment operator")]]
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator=(const char* &num)
+
+	// copy assignment operator
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
+	SelectType<bitsize_t>::BigUint<bitsize> SelectType<bitsize_t>::BigUint<bitsize>::operator=(const BigUint &num)
 	{
-		delete this; // object suicide
-		return BigUint<bitsize>(num); // reconstruct as new object
+		// assign non-leading-zero elements of the operator array
+		if(num.op_size <= op_size) {
+			for(bitsize_t i=0;i<num.op_size;i++) op[i] = num.op[i];
+			for(bitsize_t i=num.op_size;i<op_size;i++) op[i] = num.op[i]; // op_size is bigger than num.op_size, pad op
+		} else {
+			for(bitsize_t i=0;i<op_size;i++) op[i] = num.op[i]; // num.op won't fit in op
+		}
+		return *this;
+	}
+
+	// copy constructor
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
+	SelectType<bitsize_t>::BigUint<bitsize>::BigUint(const BigUint &num)
+	{
+		// assign non-leading-zero elements of the operator array
+		if(num.op_size <= op_size) {
+			for(bitsize_t i=0;i<num.op_size;i++) op[i] = num.op[i];
+			for(bitsize_t i=num.op_size;i<op_size;i++) op[i] = num.op[i]; // op_size is bigger than num.op_size, pad op
+		} else {
+			for(bitsize_t i=0;i<op_size;i++) op[i] = num.op[i]; // num.op won't fit in op
+		}
 	}
 	
-	template<uint16_t bitsize>
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
+	[[nodiscard("discarded BigUint assignment operator")]]
+	constexpr SelectType<bitsize_t>::BigUint<bitsize> SelectType<bitsize_t>::BigUint<bitsize>::operator=(const char* &num)
+	{
+		*this = BigUint<bitsize>(num);
+		return *this; // reconstruct as new object
+	}
+	
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
 	[[nodiscard("discarded BigUint boolean and operator&&")]]
-	constexpr bool BigUint<bitsize>::operator&&(BigUint num) const
+	constexpr bool SelectType<bitsize_t>::BigUint<bitsize>::operator&&(BigUint num) const
 	{
 		if (*this == "0" or num == "0") return 0;
 		return 1;
 	}
 	
-	template<uint16_t bitsize>
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
 	[[nodiscard("discarded BigUint boolean or operator||")]]
-	constexpr bool BigUint<bitsize>::operator||(BigUint num) const
+	constexpr bool SelectType<bitsize_t>::BigUint<bitsize>::operator||(BigUint num) const
 	{
 		if (*this == "0" and num == "0") return 0;
 		return 1;
@@ -207,29 +235,31 @@ namespace BigInt
 	
 	#pragma GCC diagnostic push
 	#pragma GCC diagnostic ignored "-Wc++17-extensions"
-	template<uint16_t bitsize>
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
 	[[nodiscard("discarded BigUint boolean equal to operator==")]]
-	constexpr bool BigUint<bitsize>::operator==(const BigUint &num) const
+	constexpr bool SelectType<bitsize_t>::BigUint<bitsize>::operator==(const BigUint &num) const
 	{
 		bool equal = 0;
 		if constexpr(op_size >= num.op_size) {
-			for(uint16_t i=num.op_size;i<op_size && !equal;i++) equal |= op[i] == 0;
-			for(uint16_t i=0;i<num.op_size && !equal;i++) equal |= op[i] == num.op[i];
+			for(bitsize_t i=num.op_size;i<op_size && !equal;i++) equal |= op[i] == 0;
+			for(bitsize_t i=0;i<num.op_size && !equal;i++) equal |= op[i] == num.op[i];
 		} else {
-			for(uint16_t i=op_size;i<num.op_size && !equal;i++) equal |= num.op[i] == 0;
-			for(uint16_t i=0;i<op_size && !equal;i++) equal |= op[i] == num.op[i];
+			for(bitsize_t i=op_size;i<num.op_size && !equal;i++) equal |= num.op[i] == 0;
+			for(bitsize_t i=0;i<op_size && !equal;i++) equal |= op[i] == num.op[i];
 		}
 		return equal;
 	}
 	#pragma GCC diagnostic pop
 	
 	// check if initialized and not zero
-	template<uint16_t bitsize>
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
 	[[nodiscard("discarded BigUint boolean not operator!")]]
-	constexpr bool BigUint<bitsize>::operator!() const
+	constexpr bool SelectType<bitsize_t>::BigUint<bitsize>::operator!() const
 	{
 		bool notzero = 0;
-		for(uint16_t i=0;i<op_size;i++) {
+		for(bitsize_t i=0;i<op_size;i++) {
 			if(op[i] != 0) {
 				notzero = 1;
 				break;
@@ -241,17 +271,18 @@ namespace BigInt
 	// boolean operator, check if not equal to
 	#pragma GCC diagnostic push
 	#pragma GCC diagnostic ignored "-Wc++17-extensions"
-	template<uint16_t bitsize>
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
 	[[nodiscard("discarded BigUint boolean not equal to operator!=")]]
-	constexpr bool BigUint<bitsize>::operator!=(const BigUint &num) const
+	constexpr bool SelectType<bitsize_t>::BigUint<bitsize>::operator!=(const BigUint &num) const
 	{
 		bool notequal = 0;
 		if constexpr(op_size >= num.op_size) {
-			for(uint16_t i=num.op_size;i<op_size && !notequal;i++) notequal |= op[i] != 0;
-			for(uint16_t i=0;i<num.op_size && !notequal;i++) notequal |= op[i] != num.op[i];
+			for(bitsize_t i=num.op_size;i<op_size && !notequal;i++) notequal |= op[i] != 0;
+			for(bitsize_t i=0;i<num.op_size && !notequal;i++) notequal |= op[i] != num.op[i];
 		} else {
-			for(uint16_t i=op_size;i<num.op_size && !notequal;i++) notequal |= num.op[i] != 0;
-			for(uint16_t i=0;i<op_size && !notequal;i++) notequal |= op[i] != num.op[i];
+			for(bitsize_t i=op_size;i<num.op_size && !notequal;i++) notequal |= num.op[i] != 0;
+			for(bitsize_t i=0;i<op_size && !notequal;i++) notequal |= op[i] != num.op[i];
 		}
 		return notequal;
 	}
@@ -259,15 +290,16 @@ namespace BigInt
 
 	// TODO: make sure that all of the following comparision operators work with different op-sizes, they are currently not designed to.
 	
-	template<uint16_t bitsize>
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
 	[[nodiscard("discarded BigUint boolean less than operator<")]]
-	constexpr bool BigUint<bitsize>::operator<(const BigUint &num) const
+	constexpr bool SelectType<bitsize_t>::BigUint<bitsize>::operator<(const BigUint &num) const
 	{
 		bool less = 0;
 	
 		// condition to avoid iterating over non-existing members of op
-		const constexpr uint16_t iterator = op_size < num.op_size ? op_size : num.op_size;
-		for(uint16_t i=0;i<iterator;i++) {
+		const constexpr bitsize_t iterator = op_size < num.op_size ? op_size : num.op_size;
+		for(bitsize_t i=0;i<iterator;i++) {
 			if(op[i] < num.op[i]) {
 				less = 1;
 				break;
@@ -279,14 +311,15 @@ namespace BigInt
 		return less;
 	}
 	
-	template<uint16_t bitsize>
-	constexpr bool BigUint<bitsize>::operator<=(const BigUint &num) const
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
+	constexpr bool SelectType<bitsize_t>::BigUint<bitsize>::operator<=(const BigUint &num) const
 	{
 		bool less = 0; // or equal
 	
 		// condition to avoid iterating over non-existing members of op
-		const uint16_t constexpr iterator = op_size < num.op_size ? op_size : num.op_size;
-		for(uint16_t i=0;i<iterator;i++) {
+		const bitsize_t constexpr iterator = op_size < num.op_size ? op_size : num.op_size;
+		for(bitsize_t i=0;i<iterator;i++) {
 			if(op[i] <= num.op[i]) {
 				less = 1;
 				break;
@@ -297,15 +330,16 @@ namespace BigInt
 		return less;
 	}
 	
-	template<uint16_t bitsize>
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
 	[[nodiscard("discarded BigUint greater operator>")]]
-	constexpr bool BigUint<bitsize>::operator>(const BigUint &num) const
+	constexpr bool SelectType<bitsize_t>::BigUint<bitsize>::operator>(const BigUint &num) const
 	{
 		bool greater = 0; // or equal
 	
 		// condition to avoid iterating over non-existing members of op
-		const constexpr uint16_t iterator = op_size < num.op_size ? op_size : num.op_size;
-		for(uint16_t i=0;i<iterator;i++) {
+		const constexpr bitsize_t iterator = op_size < num.op_size ? op_size : num.op_size;
+		for(bitsize_t i=0;i<iterator;i++) {
 			if(op[i] > num.op[i]) {
 				greater = 1;
 				break;
@@ -317,14 +351,15 @@ namespace BigInt
 		return greater;
 	}
 	
-	template<uint16_t bitsize>
-	constexpr bool BigUint<bitsize>::operator>=(const BigUint &num) const
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
+	constexpr bool SelectType<bitsize_t>::BigUint<bitsize>::operator>=(const BigUint &num) const
 	{
 		bool greater = 0; // or equal
 	
 		// condition to avoid iterating over non-existing members of op
-		const constexpr uint16_t iterator = op_size < num.op_size ? op_size : num.op_size;
-		for(uint16_t i=0;i<iterator;i++) {
+		const constexpr bitsize_t iterator = op_size < num.op_size ? op_size : num.op_size;
+		for(bitsize_t i=0;i<iterator;i++) {
 			if(op[i] >= num.op[i]) {
 				greater = 1;
 				break;
@@ -336,70 +371,86 @@ namespace BigInt
 	}
 	
 	
-	template<uint16_t bitsize>
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
 	[[nodiscard("discarded BigUint operator+")]]
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator+(const BigUint &num)
+	constexpr SelectType<bitsize_t>::BigUint<bitsize> SelectType<bitsize_t>::BigUint<bitsize>::operator+(const BigUint &num)
 	{
-		uint64_t new_op[op_size];
-		uint64_t tmp_op[op_size];
-		std::copy(std::begin(op), std::end(op), std::begin(tmp_op)); // set to op
-		for(uint16_t i=op_size;i --> 0;) {
-			new_op[i] = 0;
+		uint64_t *new_op = (uint64_t*)calloc(8, op_size);
+		uint64_t *tmp_op = new uint64_t[op_size*8];
+		memcpy(tmp_op, op, 8*op_size); // if ptr: set to op
+		//std::copy(std::begin(op), std::end(op), std::begin(tmp_op)); // if array: set to op
+		//for(bitsize_t i=0;i<op_size;i++) new_op[i] = 0; // for debugging valgrind error, initialize new_op to zero first
+		
+		for(bitsize_t i=op_size;i --> 0;) {
 			__uint128_t tmp = tmp_op[i];
 			tmp += num.op[i];
 			if(tmp > UINT64_MAX) {
 	    		new_op[i] += tmp & UINT64_MAX; // assign the main value to assign value with no carry (only no carry because of bit-shifting)
-				uint16_t j = 1;
-				while(new_op[i-j] == UINT64_MAX and i+j < op_size-1) {
-	    			tmp_op[i-j]++; // carry
-					j++;
+				bitsize_t j = 1;
+				if(j <= i) {
+					while(new_op[i-j] == UINT64_MAX) {
+	    				tmp_op[i-j]++; // carry
+						j++;
+					}
+	    			tmp_op[i-j]++;
 				}
-	    		tmp_op[i-j]++;
 			} else {
 				new_op[i] += tmp;
 			}
 		}
 	
-		return BigUint<bitsize>(new_op, op_size);
+		auto newint = BigUint<bitsize>(new_op, op_size);
+		delete[] tmp_op;
+		free(new_op);
+		return newint;
 	}
 
-	template<uint16_t bitsize>
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator+=(const BigUint &num)
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
+	constexpr SelectType<bitsize_t>::BigUint<bitsize> SelectType<bitsize_t>::BigUint<bitsize>::operator+=(const BigUint &num)
 	{
-		uint64_t tmp_op[op_size];
-		std::copy(std::begin(op), std::end(op), std::begin(tmp_op)); // set to op
-		for(uint16_t i=op_size;i --> 0;) {
+		uint64_t *tmp_op = new uint64_t[op_size];
+		//uint64_t tmp_op[op_size];
+		memcpy(tmp_op, op, op_size*8); // if ptr: set to op
+		// std::copy(std::begin(op), std::end(op), std::begin(tmp_op)); // if array: set to op
+		for(bitsize_t i=op_size;i --> 0;) {
 			op[i] = 0;
 			__uint128_t tmp = tmp_op[i];
 			tmp += num.op[i];
 			if(tmp > UINT64_MAX) {
 	    		op[i] = tmp & UINT64_MAX; // assign the main value to assign value with no carry (only no carry because of bit-shifting)
-				uint16_t j = 1;
-				while(op[i-j] == UINT64_MAX and i+j < op_size-1) { // carry index
+				bitsize_t j = 1;
+				if(j <= i) {
+					while(op[i-j] == UINT64_MAX) { // carry index
+	    				tmp_op[i-j]++; // carry
+						j++;
+					}
 	    			tmp_op[i-j]++; // carry
-					j++;
 				}
-	    		tmp_op[i-j]++; // carry
 			} else {
 				op[i] += tmp;
 			}
 		}
+		delete[] tmp_op;
 		return *this;
 	}
 
-	template<uint16_t bitsize>
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
 	[[nodiscard("discarded BigUint operator-")]]
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator-(const BigUint &num)
+	constexpr SelectType<bitsize_t>::BigUint<bitsize> SelectType<bitsize_t>::BigUint<bitsize>::operator-(const BigUint &num)
 	{
-		uint64_t ret[op_size];
-		uint64_t new_op[op_size];
-		std::copy(std::begin(op), std::end(op), std::begin(new_op)); // set to op
-		for(uint16_t i=op_size;i --> 0;) {
+		uint64_t *ret = new uint64_t[op_size];
+		uint64_t *new_op = new uint64_t[op_size];
+		memcpy(new_op, op, op_size*8); // if ptr: set to op
+		// std::copy(std::begin(op), std::end(op), std::begin(new_op)); // if array: set to op
+		for(bitsize_t i=op_size;i --> 0;) {
 			ret[i] = 0;
 			if (new_op[i] < num.op[i]) {
 				ret[i] = new_op[i]-num.op[i];
-				uint16_t j=1;
-				while(new_op[i-j] == 0 and i-j > 0) {
+				bitsize_t j=1;
+				while(i-j > 0 and new_op[i-j] == 0) {
 					new_op[i-j]--; // carry
 					j++;
 				}
@@ -408,17 +459,21 @@ namespace BigInt
 				ret[i] = new_op[i] - num.op[i];
 			}
 		}
-		return BigUint<bitsize>(ret, op_size);
+		auto newint = BigUint<bitsize>(ret, op_size);
+		delete[] new_op;
+		delete[] ret;
+		return newint;
 	}
 
-	template<uint16_t bitsize>
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator-=(const BigUint &num)
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
+	constexpr SelectType<bitsize_t>::BigUint<bitsize> SelectType<bitsize_t>::BigUint<bitsize>::operator-=(const BigUint &num)
 	{
-		for(uint16_t i=op_size;i --> 0;) {
+		for(bitsize_t i=op_size;i --> 0;) {
 			if (op[i] < num.op[i]) {
 				op[i] -= num.op[i];
-				uint16_t j=1;
-				while(op[i-j] == 0 and i-j > 0) {
+				bitsize_t j=1;
+				while(i-j > 0 and op[i-j] == 0) {
 					op[i-j]--; // carry
 					j++;
 				}
@@ -430,13 +485,15 @@ namespace BigInt
 		return *this;
 	}
 
-	template<uint16_t bitsize>
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
 	[[nodiscard("discarded BigUint operator*")]]
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator*(BigUint num)
+	constexpr SelectType<bitsize_t>::BigUint<bitsize> SelectType<bitsize_t>::BigUint<bitsize>::operator*(BigUint num)
 	{
 		// Russian Peasant Algorithm
-		uint64_t o[op_size];
-		for(uint16_t i=0;i<op_size;i++) o[i] = op[i];
+		uint64_t *o = new uint64_t[op_size];
+		memcpy(o, op, 8*op_size); // for ptr
+		// for(bitsize_t i=0;i<op_size;i++) o[i] = op[i]; // for array
 		BigUint<bitsize> new_op = BigUint<bitsize>(o, op_size);
 		BigUint<bitsize> ret = 0;
 		while(num > "0") {
@@ -444,28 +501,33 @@ namespace BigInt
 			new_op <<= 1;
 			num >>= 1;
 		}
+		delete[] o;
 		return ret;
 	}
 
-	template<uint16_t bitsize>
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator*=(BigUint num)
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
+	constexpr SelectType<bitsize_t>::BigUint<bitsize> SelectType<bitsize_t>::BigUint<bitsize>::operator*=(BigUint num)
 	{
 		*this = *this * num;
 		return *this;
 	}
 
-	template<uint16_t bitsize>
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
 	[[nodiscard("discarded BigUint operator/")]]
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator/(const BigUint &num)
+	constexpr SelectType<bitsize_t>::BigUint<bitsize> SelectType<bitsize_t>::BigUint<bitsize>::operator/(const BigUint &num)
 	{
 			BigUint<bitsize> d = num;
 			BigUint<bitsize> current = 1;
 			BigUint<bitsize> ret = 0;
 
 			// make copy of *this
-			uint64_t o[op_size];
-			for(uint16_t i=0;i<op_size;i++) o[i] = op[i];
+			uint64_t *o = new uint64_t[op_size];
+			memcpy(o, op, 8*op_size);
+			// for(bitsize_t i=0;i<op_size;i++) o[i] = op[i];
 			BigUint<bitsize> new_op = BigUint<bitsize>(o, op_size);
+			delete[] o;
 
 			if (d > new_op) {
 				return 0;
@@ -494,202 +556,261 @@ namespace BigInt
 			return ret;
 	}
 
-	template<uint16_t bitsize>
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator/=(const BigUint &num)
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
+	constexpr SelectType<bitsize_t>::BigUint<bitsize> SelectType<bitsize_t>::BigUint<bitsize>::operator/=(const BigUint &num)
 	{
 		*this = *this / num;
 		return *this;
 	}
 
-	template<uint16_t bitsize>
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
 	[[nodiscard("discarded BigUint operator%")]]
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator%(const BigUint &num)
+	constexpr SelectType<bitsize_t>::BigUint<bitsize> SelectType<bitsize_t>::BigUint<bitsize>::operator%(const BigUint &num)
 	{
 		// make copy of *this
-		uint64_t o[op_size];
-		for(uint16_t i=0;i<op_size;i++) o[i] = num.op[i];
+		uint64_t *o = new uint64_t[op_size];
+		memcpy(o, num.op, 8*op_size);
+		// for(bitsize_t i=0;i<op_size;i++) o[i] = num.op[i]; // for array
 		BigUint<bitsize> new_op = BigUint<bitsize>(o, op_size);
+		delete[] o;
 		return *this - (*this / new_op) * new_op;
 	}
 
-	template<uint16_t bitsize>
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator%=(const BigUint &num)
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
+	constexpr SelectType<bitsize_t>::BigUint<bitsize> SelectType<bitsize_t>::BigUint<bitsize>::operator%=(const BigUint &num)
 	{
 		*this = *this % num;
 		return *this;
 	}
 
-	template<uint16_t bitsize>
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator++(int)
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
+	constexpr SelectType<bitsize_t>::BigUint<bitsize> SelectType<bitsize_t>::BigUint<bitsize>::operator++(int)
 	{
 		*this += 1;
 		return *this;
 	}
 
-	template<uint16_t bitsize>
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator--(int)
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
+	constexpr SelectType<bitsize_t>::BigUint<bitsize> SelectType<bitsize_t>::BigUint<bitsize>::operator--(int)
 	{
 		*this -= 1;
 		return *this;
 	}
 
-	template<uint16_t bitsize>
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
 	[[nodiscard("discarded BigUint operator[] for accessing bit")]]
-	constexpr bool BigUint<bitsize>::operator[](const uint32_t &index) const
+	constexpr uint64_t SelectType<bitsize_t>::BigUint<bitsize>::operator[](const bitsize_t &index) const
 	{
-		const uint64_t mod = index%64;
-		return op[!mod ? index/64 : index/64+1] & (1 << mod);
-	}
-
-	template<uint16_t bitsize>
-	[[nodiscard("discarded BigUint operator[] for accessing 64-bits")]]
-	constexpr uint64_t BigUint<bitsize>::operator[](const uint16_t &index) const
-	{
+		if(isbit) {
+			const uint64_t mod = index%64;
+			return op[!mod ? index/64 : index/64+1] & (1 << mod);
+		} else {
 		return op[index];
+		}
 	}
 
-	template<uint16_t bitsize>
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
 	[[nodiscard("discarded BigUint operator~")]]
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator~() const
+	constexpr SelectType<bitsize_t>::BigUint<bitsize> SelectType<bitsize_t>::BigUint<bitsize>::operator~() const
 	{
-		uint64_t ret[op_size];
-		for(uint16_t i=0;i<op_size;i++)  ret[i] = ~op[i];
-		return BigUint<bitsize>(ret, op_size);
+		uint64_t *ret = new uint64_t[op_size];
+		for(bitsize_t i=0;i<op_size;i++)  ret[i] = ~op[i];
+		auto newint = BigUint<bitsize>(ret, op_size);
+		delete[] ret;
+		return newint;
 	}
 
-	template<uint16_t bitsize>
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
 	[[nodiscard("discarded BigUint operator&")]]
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator&(const BigUint &num)
+	constexpr SelectType<bitsize_t>::BigUint<bitsize> SelectType<bitsize_t>::BigUint<bitsize>::operator&(const BigUint &num)
 	{
-		uint64_t ret[op_size];
-		for(uint16_t i=0;i<op_size;i++)  ret[i] = op[i] & num.op[i];
-		return BigUint<bitsize>(ret, op_size);
+		uint64_t *ret = new uint64_t[op_size];
+		for(bitsize_t i=0;i<op_size;i++)  ret[i] = op[i] & num.op[i];
+		auto newint = BigUint<bitsize>(ret, op_size);
+		delete[] ret;
+		return newint;
 	}
 
-	template<uint16_t bitsize>
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator&=(const BigUint &num)
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
+	constexpr SelectType<bitsize_t>::BigUint<bitsize> SelectType<bitsize_t>::BigUint<bitsize>::operator&=(const BigUint &num)
 	{
 		// assuming they are the same size. Which should be enforced by compiler by default
-		for(uint16_t i=0;i<op_size;i++)  op[i] &= num.op[i];
+		for(bitsize_t i=0;i<op_size;i++)  op[i] &= num.op[i];
 		return *this;
 	}
 
-	template<uint16_t bitsize>
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
 	[[nodiscard("discarded BigUint operator^")]]
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator^(const BigUint &num)
+	constexpr SelectType<bitsize_t>::BigUint<bitsize> SelectType<bitsize_t>::BigUint<bitsize>::operator^(const BigUint &num)
 	{
 		// assuming they are the same size. Which should be enforced by compiler by default
-		uint64_t ret[op_size];
-		for(uint16_t i=0;i<op_size;i++)  ret[i] = op[i] ^ num.op[i];
-		return BigUint<bitsize>(ret, op_size);
+		uint64_t *ret = new uint64_t[op_size];
+		for(bitsize_t i=0;i<op_size;i++)  ret[i] = op[i] ^ num.op[i];
+		auto newint = BigUint<bitsize>(ret, op_size);
+		delete[] ret;
+		return newint;
 	}
 
-	template<uint16_t bitsize>
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator^=(const BigUint &num)
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
+	constexpr SelectType<bitsize_t>::BigUint<bitsize> SelectType<bitsize_t>::BigUint<bitsize>::operator^=(const BigUint &num)
 	{
 		// assuming they are the same size. Which should be enforced by compiler by default
-		for(uint16_t i=0;i<op_size;i++)  op[i] ^= num.op[i];
+		for(bitsize_t i=0;i<op_size;i++)  op[i] ^= num.op[i];
 		return *this;
 	}
 
-	template<uint16_t bitsize>
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
 	[[nodiscard("discarded BigUint operator>>")]]
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator>>(const uint16_t &num)
+	constexpr SelectType<bitsize_t>::BigUint<bitsize> SelectType<bitsize_t>::BigUint<bitsize>::operator>>(const bitsize_t &num)
 	{
-		uint64_t ret[op_size];
+		uint64_t *ret = new uint64_t[op_size];
 		if(num >= bitsize) {
-			for(uint16_t i=0;i<op_size;i++) ret[i] = 0;
+			for(bitsize_t i=0;i<op_size;i++) ret[i] = 0;
 			return BigUint<bitsize>(ret, op_size);
 		}
 
 		std::stringstream buf;
-		for(uint16_t i=0;i<op_size;i++) {
+		for(bitsize_t i=0;i<op_size;i++) {
 			std::bitset<64> tmp(op[i]);
 			buf << tmp.to_string();
 		}
-		std::bitset<bitsize> bits(buf.str());
-		bits >>= num;
+
+		// if bitsize is larger than 2^19 bytes, don't use stack
+		std::string str;
+		if constexpr(bitsize >= 4194304) {
+			std::bitset<bitsize> *bits = new std::bitset<bitsize>(buf.str());
+			*bits >>= num;
+			str = (*bits).to_string();
+			delete bits;
+		} else {
+			std::bitset<bitsize> bits(buf.str());
+			bits >>= num;
+			str = (bits).to_string();
+		}
 		buf.clear();
-		std::string str = bits.to_string();
 		std::string out = "";
-		for(uint16_t i=0;i<op_size;i++) {
+		for(bitsize_t i=0;i<op_size;i++) {
 			std::bitset<64> buffer(str.substr(i*64, i*64+64));
 			ret[i] = buffer.to_ullong();
 		}
 
-		return BigUint<bitsize>(ret, op_size);
+		auto newint = BigUint<bitsize>(ret, op_size);
+		delete[] ret;
+		return newint;
 	}
 
-	template<uint16_t bitsize>
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator>>=(const uint16_t &num)
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
+	constexpr SelectType<bitsize_t>::BigUint<bitsize> SelectType<bitsize_t>::BigUint<bitsize>::operator>>=(const bitsize_t &num)
 	{
 		if(num >= bitsize) {
-			for(uint16_t i=0;i<op_size;i++) op[i] = 0;
+			for(bitsize_t i=0;i<op_size;i++) op[i] = 0;
 			return *this;
 		}
 		std::stringstream buf;
-		for(uint16_t i=0;i<op_size;i++) {
+		for(bitsize_t i=0;i<op_size;i++) {
 			std::bitset<64> tmp(op[i]);
 			buf << tmp.to_string();
 		}
-		std::bitset<bitsize> bits(buf.str());
-		bits >>= num;
+		// if bitsize is larger than 2^19 bytes, don't use stack
+		std::string str;
+		if constexpr(bitsize >= 4194304) {
+			std::bitset<bitsize> *bits = new std::bitset<bitsize>(buf.str());
+			*bits >>= num;
+			str = (*bits).to_string();
+			delete bits;
+		} else {
+			std::bitset<bitsize> bits(buf.str());
+			bits >>= num;
+			str = (bits).to_string();
+		}
 		buf.clear();
-		std::string str = bits.to_string();
 		std::string out = "";
-		for(uint16_t i=0;i<op_size;i++) {
+		for(bitsize_t i=0;i<op_size;i++) {
 			std::bitset<64> buffer(str.substr(i*64, i*64+64));
 			op[i] = buffer.to_ullong();
 		}
-
 		return *this;
 	}
 
-	template<uint16_t bitsize>
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
 	[[nodiscard("discarded BigUint operator<<")]]
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator<<(const uint16_t &num)
+	constexpr SelectType<bitsize_t>::BigUint<bitsize> SelectType<bitsize_t>::BigUint<bitsize>::operator<<(const bitsize_t &num)
 	{
-		uint64_t ret[op_size];
+		uint64_t *ret = new uint64_t[op_size];
 		if(num >= bitsize) {
-			for(uint16_t i=0;i<op_size;i++) ret[i] = 0;
+			for(bitsize_t i=0;i<op_size;i++) ret[i] = 0;
 			return BigUint<bitsize>(ret, op_size);
 		}
 
 		std::stringstream buf;
-		for(uint16_t i=0;i<op_size;i++) {
+		for(bitsize_t i=0;i<op_size;i++) {
 			std::bitset<64> tmp(op[i]);
 			buf << tmp.to_string();
 		}
-		std::bitset<bitsize> bits(buf.str());
-		bits <<= num;
+		// if bitsize is larger than 2^19 bytes, don't use stack
+		std::string str;
+		if constexpr(bitsize >= 4194304) {
+			std::bitset<bitsize> *bits = new std::bitset<bitsize>(buf.str());
+			*bits <<= num;
+			str = (*bits).to_string();
+			delete bits;
+		} else {
+			std::bitset<bitsize> bits(buf.str());
+			bits <<= num;
+			str = (bits).to_string();
+		}
 		buf.clear();
-		std::string str = bits.to_string();
 		std::string out = "";
-		for(uint16_t i=0;i<op_size;i++) {
+		for(bitsize_t i=0;i<op_size;i++) {
 			std::bitset<64> buffer(str.substr(i*64, i*64+64));
 			ret[i] = buffer.to_ullong();
 		}
-		return BigUint<bitsize>(ret, op_size);
+		auto newint = BigUint<bitsize>(ret, op_size);
+		delete[] ret;
+		return newint;
 	}
 
-	template<uint16_t bitsize>
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator<<=(const uint16_t &num)
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
+	constexpr SelectType<bitsize_t>::BigUint<bitsize> SelectType<bitsize_t>::BigUint<bitsize>::operator<<=(const bitsize_t &num)
 	{
 		if(num >= bitsize) {
-			for(uint16_t i=0;i<op_size;i++) op[i] = 0;
+			for(bitsize_t i=0;i<op_size;i++) op[i] = 0;
 			return *this;
 		}
 		std::stringstream buf;
-		for(uint16_t i=0;i<op_size;i++) {
+		for(bitsize_t i=0;i<op_size;i++) {
 			std::bitset<64> tmp(op[i]);
 			buf << tmp.to_string();
 		}
-		std::bitset<bitsize> bits(buf.str());
-		bits <<= num;
+		std::string str;
+		if constexpr(bitsize >= 4194304) {
+			std::bitset<bitsize> *bits = new std::bitset<bitsize>(buf.str());
+			*bits <<= num;
+			str = (*bits).to_string();
+			delete bits;
+		} else {
+			std::bitset<bitsize> bits(buf.str());
+			bits <<= num;
+			str = (bits).to_string();
+		}
 		buf.clear();
-		std::string str = bits.to_string();
 		std::string out = "";
-		for(uint16_t i=0;i<op_size;i++) {
+		for(bitsize_t i=0;i<op_size;i++) {
 			std::bitset<64> buffer(str.substr(i*64, i*64+64));
 			op[i] = buffer.to_ullong();
 		}
@@ -697,30 +818,35 @@ namespace BigInt
 		return *this;
 	}
 
-	template<uint16_t bitsize>
+	 
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
 	[[nodiscard("discarded BigUint operator|")]]
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator|(const BigUint &num)
+	constexpr SelectType<bitsize_t>::BigUint<bitsize> SelectType<bitsize_t>::BigUint<bitsize>::operator|(const BigUint &num)
 	{
 		// assuming they are the same size. Which should be enforced by compiler by default
-		uint64_t ret[op_size];
-		for(uint16_t i=0;i<op_size;i++)  ret[i] = op[i] | num.op[i];
-		return BigUint<bitsize>(ret, op_size);
+		uint64_t *ret = new uint64_t[op_size];
+		for(bitsize_t i=0;i<op_size;i++)  ret[i] = op[i] | num.op[i];
+		auto newint = BigUint<bitsize>(ret, op_size);
+		delete[] ret;
+		return newint;
 	}
 
-	template<uint16_t bitsize>
-	constexpr BigUint<bitsize> BigUint<bitsize>::operator|=(const BigUint &num)
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
+	constexpr SelectType<bitsize_t>::BigUint<bitsize> SelectType<bitsize_t>::BigUint<bitsize>::operator|=(const BigUint &num)
 	{
 		// assuming they are the same size. Which should be enforced by compiler by default
-		for(uint16_t i=0;i<op_size;i++)  op[i] |= num.op[i];
+		for(bitsize_t i=0;i<op_size;i++)  op[i] |= num.op[i];
 		return *this;
 	}
 
 	template<uint16_t bitsize>
-	BigUint<bitsize> pow(BigUint<bitsize> base, BigUint<bitsize> exp)
+	SelectType<uint16_t>::BigUint<bitsize> pow(SelectType<uint16_t>::BigUint<bitsize> base, SelectType<uint16_t>::BigUint<bitsize> exp)
 	{
 
-		BigUint<bitsize> ret = 1;
-		for(BigUint<bitsize> i=0;i<exp;i++) {
+		SelectType<uint16_t>::BigUint<bitsize> ret = 1;
+		for(SelectType<uint16_t>::BigUint<bitsize> i=0;i<exp;i++) {
 			ret *= base;
 		}
 		return ret;
@@ -738,6 +864,65 @@ namespace BigInt
 		//
 		//return prod;
 	}
+	template<uint32_t bitsize>
+	SelectType<uint32_t>::BigUint<bitsize> pow(SelectType<uint32_t>::BigUint<bitsize> base, SelectType<uint32_t>::BigUint<bitsize> exp)
+	{
+
+		SelectType<uint32_t>::BigUint<bitsize> ret = 1;
+		for(SelectType<uint32_t>::BigUint<bitsize> i=0;i<exp;i++) {
+			ret *= base;
+		}
+		return ret;
+	}
+
+	template<uint64_t bitsize>
+	SelectType<uint64_t>::BigUint<bitsize> pow(SelectType<uint64_t>::BigUint<bitsize> base, SelectType<uint64_t>::BigUint<bitsize> exp)
+	{
+
+		SelectType<uint64_t>::BigUint<bitsize> ret = 1;
+		for(SelectType<uint64_t>::BigUint<bitsize> i=0;i<exp;i++) {
+			ret *= base;
+		}
+		return ret;
+	}
+
+	template<__uint128_t bitsize>
+	SelectType<__uint128_t>::BigUint<bitsize> pow(SelectType<__uint128_t>::BigUint<bitsize> base, SelectType<__uint128_t>::BigUint<bitsize> exp)
+	{
+
+		SelectType<__uint128_t>::BigUint<bitsize> ret = 1;
+		for(SelectType<__uint128_t>::BigUint<bitsize> i=0;i<exp;i++) {
+			ret *= base;
+		}
+		return ret;
+	}
+
+	// define destructor
+	template<typename bitsize_t>
+	template<bitsize_t bitsize>
+	SelectType<bitsize_t>::BigUint<bitsize>::~BigUint()
+	{
+		delete[] op;
+	}
+	
+
+	// use the following types.
+
+	// Use BigUint when you need numbers in range (0, 2^32768)
+	template<uint16_t bitsize>
+	using BigUint = SelectType<uint16_t>::BigUint<bitsize>;
+
+	// Use LargeUint when you need numbers in range (0, 2^2147483648)
+	template<uint32_t bitsize>
+	using LargeUint = SelectType<uint32_t>::BigUint<bitsize>;
+
+	// Use HugeUint when you need numbers in range (0, 2^9223372036854775808)
+	template<uint64_t bitsize>
+	using HugeUint = SelectType<uint64_t>::BigUint<bitsize>;
+
+	// Use YugeUint when you need numbers in range (0, 2^170141183460469231731687303715884105728)
+	template<__uint128_t bitsize>
+	using YugeUint = SelectType<__uint128_t>::BigUint<bitsize>;
 }; /* NAMESPACE BIGINT */
 
 #endif /* BIGINT_CPP */

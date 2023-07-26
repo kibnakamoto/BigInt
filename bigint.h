@@ -11,12 +11,10 @@
 #include <type_traits>
 #include <iostream>
 
-// TODO: define exponents
 // To define operations for all types instead of just multiples of 64. Calculate 2**bitsize (in 64-bit segments), every 64-bit segment is the modulo instead of UINT64_MAX, meaning replace UINT64_MAX WITH 2**bitsize
 
 namespace BigInt
 {
-	
 	// raise when wrong type
 	class wrong_type_error : public std::runtime_error {
 		public: explicit wrong_type_error(const char *str) : std::runtime_error(str) {}
@@ -27,270 +25,430 @@ namespace BigInt
 		public: explicit int_too_large_error(const char *str) : std::runtime_error(str) {}
 	};
 	
-	// custom-size integer class
-	template<uint16_t bitsize>
-	// alignas((bitsize%64==0 ? bitsize/64 : bitsize/64+1)<<3)
-	class BigUint {
-		protected:
-			// operator array
-			const constexpr static uint16_t op_size = bitsize%64==0 ? bitsize/64 : bitsize/64+1;
-			uint64_t op[op_size]; // when iterating, start from end to start
-			uint16_t op_nonleading_i; // index of op when leading zeros end
-
-			// uint128_t input to 2 uint64_t integers
-			// constant mask values
-		    static constexpr const __uint128_t bottom_mask_u128 = (__uint128_t{1} << 64) - 1; // 0x0000000000000000ffffffffffffffffU
-	    	static constexpr const __uint128_t top_mask_u128 = ~bottom_mask_u128;                  // 0xffffffffffffffff0000000000000000U
-
-			// get substring of char* - helper function
-			constexpr std::string get_substring(const char* str, uint16_t start, uint16_t substrsize)
-			{
-				std::string substr = "";
-			
-				// Copy the characters from str[startIndex] to str[endIndex]
-				const uint16_t width = substrsize+start;
-				for(uint16_t i=start;i<width;i++) substr += str[i];
-				return substr;
-			}
-			inline uint64_t rotr(uint64_t x, unsigned int n) { return (x >> n)|(x << ((sizeof(x)<<3)-n)); }
-			inline uint64_t rotl(uint64_t x, unsigned int n) { return (x << n)|(x >> ((sizeof(x)<<3)-n)); }
-
+	
+	template<typename bitsize_t>
+	class SelectType {
 		public:
-			#pragma GCC diagnostic push
-			#pragma GCC diagnostic ignored "-Wignored-qualifiers" // silence this warning, the qualifiers are necesarry
-			static const constexpr inline uint16_t __get_op_size() { return op_size; }
-			#pragma GCC diagnostic pop
-			inline uint64_t* __get_op() { return op; }
+		bool isptr = 0; // if stackoverflow, make sure to make op a ptr. Do this by assigning isptr to 1
+		// custom-size integer class
+		template<bitsize_t bitsize>
+		// alignas((bitsize%64==0 ? bitsize/64 : bitsize/64+1)<<3)
+		class BigUint {
+			protected:
+				// operator array
+				const constexpr static bitsize_t op_size = bitsize%64==0 ? bitsize/64 : bitsize/64+1;
+				uint64_t *op = new uint64_t[op_size];
+				//uint64_t op[op_size]; // when iterating, start from end to start
+				bitsize_t op_nonleading_i; // index of op when leading zeros end
 	
-			const constexpr static uint16_t size = bitsize;
-			template<uint8_t base=0> // type of input (int = base 10, hex = base 16)
-			BigUint(std::string input);
-			template<uint8_t base=0> // type of input (int = base 10, hex = base 16)
-			BigUint(const char *input);
-
-			// assign uint64_t compile time array to op, there is also a non-garunteed compile time function. That is a constructor
-			template<uint16_t len, std::array<uint64_t, len> tmp_op>
-			consteval BigUint assign_op() noexcept;
-
-			// the next constructor as a compile-time function
-			template<typename ...Ts>
-			//consteval BigUint assign_conste(const __uint128_t&&input1, Ts&&...input) noexcept; // assign consteval using the same method as the next function
-			consteval BigUint assign_conste(Ts...input) noexcept; // assign consteval using the same method as the next function
+				// uint128_t input to 2 uint64_t integers
+				// constant mask values
+			    static constexpr const __uint128_t bottom_mask_u128 = (__uint128_t{1} << 64) - 1; // 0x0000000000000000ffffffffffffffffU
+		    	static constexpr const __uint128_t top_mask_u128 = ~bottom_mask_u128;                  // 0xffffffffffffffff0000000000000000U
 	
-			// numerical input. If number is 256-bit, input = left 128-bit, right 128-bit
-			constexpr BigUint(const uint16_t count, __uint128_t input...);
-
-			constexpr BigUint(const uint64_t num) {
-				for(uint16_t i=0;i<op_size-1;i++) op[i] = 0;
-				op[op_size-1] = num;
-			}
-	
-			// input as operation array
-			constexpr explicit BigUint(uint64_t *input, uint16_t len);
-	
-			// decleration
-			inline constexpr BigUint() noexcept = default;
-	
-			// assign uint256 to another uint256
-			//BigUint operator=(const BigUint &num);
-			constexpr BigUint operator=(const char *&num);
-	
-			// arithmetic operations
-			constexpr BigUint operator+(const BigUint &num);
-			constexpr BigUint operator+=(const BigUint &num);
-			constexpr BigUint operator-(const BigUint &num);
-			constexpr BigUint operator-=(const BigUint &num);
-			constexpr BigUint operator*(BigUint num);
-			constexpr BigUint operator*=(BigUint num);
-			constexpr BigUint operator/(const BigUint &num);
-			constexpr BigUint operator/=(const BigUint &num);
-			constexpr BigUint operator%(const BigUint &num);
-			constexpr BigUint operator%=(const BigUint &num);
-
-			constexpr BigUint operator++(int);
-			constexpr BigUint operator--(int);
-			constexpr bool operator[](const uint32_t &index) const; // access specific bit of the number
-			constexpr uint64_t operator[](const uint16_t &index) const; // access specific 64-bit op index
-	
-			// bitwise operators
-			constexpr BigUint operator~() const;
-			constexpr BigUint operator&(const BigUint &num);
-			constexpr BigUint operator&=(const BigUint &num);
-			constexpr BigUint operator^(const BigUint &num);
-			constexpr BigUint operator^=(const BigUint &num);
-			constexpr BigUint operator>>(const uint16_t &num); // doesn't need to be BigInt because it'll be too large if bigint
-			constexpr BigUint operator>>=(const uint16_t &num); // uint16 because it is bit-size, and bitsize var is uint16
-			constexpr BigUint operator<<(const uint16_t &num);
-			constexpr BigUint operator<<=(const uint16_t &num);
-			constexpr BigUint operator|(const BigUint &num);
-			constexpr BigUint operator|=(const BigUint &num);
-	
-			// boolean operators
-			constexpr bool operator&&(BigUint num) const;
-			constexpr bool operator||(BigUint num) const;
-			constexpr bool operator==(const BigUint &num) const;
-			constexpr bool operator!() const;
-			constexpr bool operator!=(const BigUint &num) const;
-			constexpr bool operator<(const BigUint &num) const;
-			constexpr bool operator<=(const BigUint &num) const;
-			constexpr bool operator>(const BigUint &num) const;
-			constexpr bool operator>=(const BigUint &num) const;
-			
-			// delete operators for deleting run-time objects
-			inline void operator delete(void *dat); // delete object itself
-	
-			inline constexpr operator uint64_t*() noexcept { return op; }
-
-			constexpr operator bool() noexcept {
-				return op[op_size-1] != 0;
-			}
-
-			constexpr operator uint64_t() noexcept {
-				for(uint16_t i=0;i<op_size;i++) {
-					if(op[i] != 0) return op[i];
+				// get substring of char* - helper function
+				constexpr std::string get_substring(const char* str, bitsize_t start, bitsize_t substrsize)
+				{
+					std::string substr = "";
+				
+					// Copy the characters from str[startIndex] to str[endIndex]
+					const bitsize_t width = substrsize+start;
+					for(bitsize_t i=start;i<width;i++) substr += str[i];
+					return substr;
 				}
-				return op[0];
-			}
-
-			constexpr operator uint32_t() noexcept {
-				for(uint16_t i=0;i<op_size;i++) {
-					if(op[i] != 0) return op[i];
+	
+			public:
+				#pragma GCC diagnostic push
+				#pragma GCC diagnostic ignored "-Wignored-qualifiers" // silence this warning, the qualifiers are necesarry
+				static const constexpr inline bitsize_t __get_op_size() { return op_size; }
+				#pragma GCC diagnostic pop
+				inline uint64_t* __get_op() { return op; }
+		
+				const constexpr static bitsize_t size = bitsize;
+				template<uint8_t base=0> // type of input (int = base 10, hex = base 16)
+				BigUint(std::string input);
+				template<uint8_t base=0> // type of input (int = base 10, hex = base 16)
+				BigUint(const char *input);
+	
+				// assign uint64_t compile time array to op, there is also a non-garunteed compile time function. That is a constructor
+				template<bitsize_t len, std::array<uint64_t, len> tmp_op>
+				consteval BigUint assign_op() noexcept;
+				~BigUint();
+	
+				// the next constructor as a compile-time function
+				template<typename ...Ts>
+				//consteval BigUint assign_conste(const __uint128_t&&input1, Ts&&...input) noexcept; // assign consteval using the same method as the next function
+				consteval BigUint assign_conste(Ts...input) noexcept; // assign consteval using the same method as the next function
+		
+				// numerical input. If number is 256-bit, input = left 128-bit, right 128-bit
+				constexpr BigUint(const bitsize_t count, __uint128_t input...);
+	
+				constexpr BigUint(const uint64_t num) {
+					for(bitsize_t i=0;i<op_size-1;i++) op[i] = 0;
+					op[op_size-1] = num;
 				}
-				return op[0];
-			}
+		
+				// input as operation array
+				constexpr explicit BigUint(uint64_t *input, bitsize_t len);
+		
+				// decleration
+				inline constexpr BigUint() noexcept = default;
+		
+				// assign uint256 to another uint256
+				BigUint operator=(const BigUint &num);
+				BigUint(const BigUint &num);
+				constexpr BigUint operator=(const char *&num);
+		
+				// arithmetic operations
+				constexpr BigUint operator+(const BigUint &num);
+				constexpr BigUint operator+=(const BigUint &num);
+				constexpr BigUint operator-(const BigUint &num);
+				constexpr BigUint operator-=(const BigUint &num);
+				constexpr BigUint operator*(BigUint num);
+				constexpr BigUint operator*=(BigUint num);
+				constexpr BigUint operator/(const BigUint &num);
+				constexpr BigUint operator/=(const BigUint &num);
+				constexpr BigUint operator%(const BigUint &num);
+				constexpr BigUint operator%=(const BigUint &num);
+	
+				constexpr BigUint operator++(int);
+				constexpr BigUint operator--(int);
 
-			constexpr operator uint16_t() noexcept {
-				for(uint16_t i=0;i<op_size;i++) {
-					if(op[i] != 0) return op[i];
+				// if isbit=1, will return bool (bit of the number), if isbit=0, return op[index]
+				bool isbit=0;
+				constexpr uint64_t operator[](const bitsize_t &index) const;
+		
+				// bitwise operators
+				constexpr BigUint operator~() const;
+				constexpr BigUint operator&(const BigUint &num);
+				constexpr BigUint operator&=(const BigUint &num);
+				constexpr BigUint operator^(const BigUint &num);
+				constexpr BigUint operator^=(const BigUint &num);
+				constexpr BigUint operator>>(const bitsize_t &num); // doesn't need to be BigInt because it'll be too large if bigint
+				constexpr BigUint operator>>=(const bitsize_t &num); // uint16 because it is bit-size, and bitsize var is uint16
+				constexpr BigUint operator<<(const bitsize_t &num);
+				constexpr BigUint operator<<=(const bitsize_t &num);
+				constexpr BigUint operator|(const BigUint &num);
+				constexpr BigUint operator|=(const BigUint &num);
+		
+				// boolean operators
+				constexpr bool operator&&(BigUint num) const;
+				constexpr bool operator||(BigUint num) const;
+				constexpr bool operator==(const BigUint &num) const;
+				constexpr bool operator!() const;
+				constexpr bool operator!=(const BigUint &num) const;
+				constexpr bool operator<(const BigUint &num) const;
+				constexpr bool operator<=(const BigUint &num) const;
+				constexpr bool operator>(const BigUint &num) const;
+				constexpr bool operator>=(const BigUint &num) const;
+				
+				// delete operators for deleting run-time objects
+				inline void operator delete(void *dat); // delete object itself
+		
+				inline constexpr operator uint64_t*() noexcept { return op; }
+	
+				constexpr operator bool() noexcept {
+					return op[op_size-1] != 0;
 				}
-				return op[0];
-			}
-			constexpr operator uint8_t() noexcept {
-				for(uint16_t i=0;i<op_size;i++) {
-					if(op[i] != 0) return op[i];
-				}
-				return op[0];
-			}
-
-			// convert between different bigints
-			template<uint16_t n> // bitsize
-			inline constexpr BigUint<n> to()
-			{
-				const constexpr uint16_t new_op_size = n%64==0 ? n/64 : n/64+1;
-				uint64_t num[new_op_size];
-				if constexpr(new_op_size <= op_size) { // when converting to a smaller type
-					const constexpr uint16_t diff = op_size-new_op_size;
-					for(uint16_t i=new_op_size;i --> 0;) num[i] = op[i+diff]; // smallest numbers of op will be dismissed, the major segment numbers will be in num
-				} else { // when converting to a bigger type
-					const constexpr uint16_t diff = new_op_size-op_size;
-					for(uint16_t i=op_size;i --> 0;) num[i+diff] = op[i];
-					for(uint16_t i=0;i<diff;i++) { // pad
-						num[i] = 0;
+	
+				constexpr operator uint64_t() noexcept {
+					for(bitsize_t i=0;i<op_size;i++) {
+						if(op[i] != 0) return op[i];
 					}
+					return op[0];
 				}
-				return BigUint<n>(num, new_op_size);
+	
+				constexpr operator uint32_t() noexcept {
+					for(bitsize_t i=0;i<op_size;i++) {
+						if(op[i] != 0) return op[i];
+					}
+					return op[0];
+				}
+	
+				constexpr operator uint16_t() noexcept {
+					for(uint16_t i=0;i<op_size;i++) {
+						if(op[i] != 0) return op[i];
+					}
+					return op[0];
+				}
+				constexpr operator uint8_t() noexcept {
+					for(bitsize_t i=0;i<op_size;i++) {
+						if(op[i] != 0) return op[i];
+					}
+					return op[0];
+				}
+	
+				// convert between different bigints
+				template<bitsize_t n> // bitsize
+				inline constexpr BigUint<n> to()
+				{
+					const constexpr bitsize_t new_op_size = n%64==0 ? n/64 : n/64+1;
+					uint64_t *num = new uint64_t[new_op_size];
+					if constexpr(new_op_size <= op_size) { // when converting to a smaller type
+						const constexpr bitsize_t diff = op_size-new_op_size;
+						for(bitsize_t i=new_op_size;i --> 0;) num[i] = op[i+diff]; // smallest numbers of op will be dismissed, the major segment numbers will be in num
+					} else { // when converting to a bigger type
+						const constexpr bitsize_t diff = new_op_size-op_size;
+						for(bitsize_t i=op_size;i --> 0;) num[i+diff] = op[i];
+						for(bitsize_t i=0;i<diff;i++) { // pad
+							num[i] = 0;
+						}
+					}
+					auto new_obj = BigUint<n>(num, new_op_size);
+					delete[] num;
+					return new_obj;
+				}
+		
+				template<bitsize_t n> friend std::ostream& operator<<(std::ostream& cout, BigUint<n> toprint);
+
+				// this print is for when stackoverflow error stops operator<<
+				void print()
+				{
+					bool pad_stopped = 0; // if pad stopped, then print the rest, including zero values
+					bool last_num = 0;
+					uint8_t pad_size;
+				
+					// initialize the pad sizes based on whether the ostream is dec, hex, oct, bin.
+					std::ios_base::fmtflags fmt = std::cout.flags();
+					if(fmt & std::ios_base::dec) pad_size = 20;
+					else if(fmt & std::ios_base::hex) pad_size = 16; // pad count: 2^64-1=16 base 16 digits
+					else if(fmt & std::ios_base::oct) pad_size = 22;
+					else pad_size = 64; // bin
+					for(uint16_t i=0;i<op_size;i++) {
+						if(op[i] != 0x0000000000000000ULL) pad_stopped=1;
+						if(pad_stopped) {
+							if(last_num)
+								std::cout << std::setfill('0') << std::setw(pad_size) << op[i];
+							else
+								std::cout << op[i]; // no padding
+							last_num = 1; // if not first print, pad
+						}
+					}
+					if(!pad_stopped) // if zero
+						std::cout << "0";
 			}
-	
-			template<uint16_t n> friend std::ostream& operator<<(std::ostream& cout, BigUint<n> toprint);
-	
-		protected:
-			// remove 0x if starting with 0x
-			constexpr inline bool rm_trailhex(const char *&num)
-			{
-				std::string_view str(const_cast<char*>(num), 2);
-				if (str == "0x") {
-					num += 2; // delete the 0x
+		
+			protected:
+				// remove 0x if starting with 0x
+				constexpr inline bool rm_trailhex(const char *&num)
+				{
+					std::string_view str(const_cast<char*>(num), 2);
+					if (str == "0x") {
+						num += 2; // delete the 0x
+						return 1;
+					}
+					return 0;
+				} 
+		
+				// check if number is hex
+				constexpr bool is_hex(const char *num, size_t numlen)
+				{
+					for(size_t i=0;i<numlen;i++)
+						if(not isxdigit(*(num+i))) return 0;
 					return 1;
 				}
-				return 0;
-			} 
-	
-			// check if number is hex
-			constexpr bool is_hex(const char *num, size_t numlen)
-			{
-				for(size_t i=0;i<numlen;i++)
-					if(not isxdigit(*(num+i))) return 0;
-				return 1;
-			}
-	
-			// check if input is base16
-			constexpr bool input_hex(const char *&input, size_t input_len)
-			{
-				// check if input is hex
-				bool _is_hex = rm_trailhex(input); // remove trailing character if it exists
-				if(!_is_hex) { // if no hex trail character '0x'
-					_is_hex = is_hex(input, input_len); // check if input is hex
-					return _is_hex;
-				} else {
-					return 1;
-				}
-			}
-	
-			// convert string to bigint
-			template<uint8_t base=0> // type of input (int = base 8, hex = base 16)
-			constexpr void strtobigint(const char *input)
-			{
-				constexpr const bool base8 = base==8;
-				constexpr const bool base16 = base==16;
-	   			const size_t len = strlen(input);
-				// TODO: check if input length is in range of operator array length, if it's not generate compile time warning
-	
-				if constexpr(base16 or base8) {
-					if constexpr(base16) {
-						rm_trailhex(input); // remove trailing character if it exists
-						hexoct_to_bigint(input, len, 16);
-					} else { // base 8
-						hexoct_to_bigint(input, len, 8);
+		
+				// check if input is base16
+				constexpr bool input_hex(const char *&input, size_t input_len)
+				{
+					// check if input is hex
+					bool _is_hex = rm_trailhex(input); // remove trailing character if it exists
+					if(!_is_hex) { // if no hex trail character '0x'
+						_is_hex = is_hex(input, input_len); // check if input is hex
+						return _is_hex;
+					} else {
+						return 1;
 					}
-				} else {
-	   				bool hex_input = input_hex(input, len);
-					if(hex_input) hexoct_to_bigint(input, len, 16);
-					else throw wrong_type_error("string or const char* input has to be hex");
 				}
-			}
-			
-			// helper algorithm to convert hex or oct values to big integer
-			constexpr void hexoct_to_bigint(const char *input, uint16_t len, const unsigned char part_size)
-			{
-	   			// convert oct/hex input to op elements
-	   			const uint8_t ind = len%part_size;
-	   			const uint16_t multiple16_count = (len-ind)/part_size;
-				uint64_t *tmp;
-				if(multiple16_count != 0) {
-	   				tmp = new uint64_t[multiple16_count];
-					// get's the first multiple of part_size values of the integer
-	   				for(uint16_t i=0;i<multiple16_count;i++) {
-						std::stringstream ss;
-						ss << std::hex << get_substring(input, i*part_size+ind,part_size);
-						ss >> tmp[i];
+		
+				// convert string to bigint
+				template<uint8_t base=0> // type of input (int = base 8, hex = base 16)
+				constexpr void strtobigint(const char *input)
+				{
+					constexpr const bool base8 = base==8;
+					constexpr const bool base16 = base==16;
+		   			size_t len = strlen(input);
+					// TODO: check if input length is in range of operator array length, if it's not generate error
+					constexpr const static __uint128_t hex_len_op = op_size*16;
+					constexpr const static __uint128_t oct_len_op = op_size*8;
+		
+					if constexpr(base16 or base8) {
+						if constexpr(base16) {
+							rm_trailhex(input); // remove trailing character if it exists
+							if(len >= hex_len_op) {
+								auto num = std::string(input).erase(hex_len_op, len-hex_len_op); // prune to hex_len_op
+								input = num.c_str();
+								len = strlen(input);
+							} // compare byte size
+							hexoct_to_bigint(input, len, 16);
+						} else { // base 8
+							if(len >= oct_len_op) {
+								auto num = std::string(input).erase(oct_len_op, len-oct_len_op); // prune to hex_len_op
+								input = num.c_str();
+								len = strlen(input);
+							} // compare byte size
+							hexoct_to_bigint(input, len, 8);
+						}
+					} else {
+		   				bool hex_input = input_hex(input, len);
+						if(hex_input) {
+							if(len >= hex_len_op) {
+								auto num = std::string(input).erase(hex_len_op, len-hex_len_op); // prune to hex_len_op
+								input = num.c_str();
+								len = strlen(input);
+								
+							} // compare byte size
+							hexoct_to_bigint(input, len, 16);
+						}
+						else throw wrong_type_error("string or const char* input has to be hex");
 					}
-	   			   	if(ind!=0) { // if len not a multiple of part_size
-	   			   		op_nonleading_i = op_size-multiple16_count-1; // includes the final value
-						std::stringstream ss;
-						ss << std::hex << get_substring(input, 0,ind);
-						ss >> op[op_size-multiple16_count-1];
-	   			   	 	for(uint16_t i=multiple16_count;i>0;i--) op[op_size-i] = tmp[multiple16_count-i];
-	   			   	} else {
-	   			   		op_nonleading_i = op_size-multiple16_count; // if length is a multiple of part_size
-	   			   	 	for(uint16_t i=multiple16_count;i>0;i--) op[op_size-i+1] = tmp[multiple16_count-i];
-	   			   	}
-				} else { // length < part_size
-	   				tmp = new uint64_t[1];
-					std::stringstream ss;
-					ss << std::hex << input;
-					ss >> *tmp;
-	   			   op_nonleading_i = op_size-1;
-				   op[op_nonleading_i] = *tmp;
 				}
-	   			// pad the operator array
-	   			for(uint16_t i=0;i<op_nonleading_i;i++) op[i] = 0x0000000000000000ULL;
-	   			delete[] tmp;
-			}
+				
+				// helper algorithm to convert hex or oct values to big integer
+				constexpr void hexoct_to_bigint(const char *input, bitsize_t len, const unsigned char part_size)
+				{
+		   			// convert oct/hex input to op elements
+		   			const uint8_t ind = len%part_size;
+		   			const bitsize_t multiple16_count = (len-ind)/part_size;
+					uint64_t *tmp;
+					if(multiple16_count != 0) {
+		   				tmp = new uint64_t[multiple16_count];
+						// get's the first multiple of part_size values of the integer
+		   				for(bitsize_t i=0;i<multiple16_count;i++) {
+							std::stringstream ss;
+							ss << std::hex << get_substring(input, i*part_size+ind,part_size);
+							ss >> tmp[i];
+						}
+		   			   	if(ind!=0) { // if len not a multiple of part_size
+		   			   		op_nonleading_i = op_size-multiple16_count-1; // includes the final value
+							std::stringstream ss;
+							ss << std::hex << get_substring(input, 0,ind);
+							ss >> op[op_size-multiple16_count-1];
+		   			   	 	for(bitsize_t i=multiple16_count;i>0;i--) op[op_size-i] = tmp[multiple16_count-i];
+		   			   	} else {
+		   			   		op_nonleading_i = op_size-multiple16_count; // if length is a multiple of part_size
+		   			   	 	for(bitsize_t i=multiple16_count;i>0;i--) op[op_size-i+1] = tmp[multiple16_count-i];
+		   			   	}
+					} else { // length < part_size
+		   				tmp = new uint64_t[1];
+						std::stringstream ss;
+						ss << std::hex << input;
+						ss >> *tmp;
+		   			   op_nonleading_i = op_size-1;
+					   op[op_nonleading_i] = *tmp;
+					}
+		   			// pad the operator array
+		   			for(bitsize_t i=0;i<op_nonleading_i;i++) op[i] = 0x0000000000000000ULL;
+		   			delete[] tmp;
+				}
+		};
+
+		template<bitsize_t bitsize>
+		BigUint<bitsize> pow(BigUint<bitsize> base, BigUint<bitsize> exp);
+		
 	};
-	 
+	using uint192_t =  SelectType<uint16_t>::BigUint<192>;
+	using uint256_t =  SelectType<uint16_t>::BigUint<256>;
+	using uint384_t =  SelectType<uint16_t>::BigUint<384>;
+	using uint512_t =  SelectType<uint16_t>::BigUint<512>;
+	using uint1024_t = SelectType<uint16_t>::BigUint<1024>;
+
+	// types of bitsize
+	typedef SelectType<uint16_t> selected_type16;
+	typedef SelectType<uint32_t> selected_type32;
+	typedef SelectType<uint64_t> selected_type64;
+	typedef SelectType<__uint128_t> selected_type128;
+	
 	// output stream operator
 	template<uint16_t bitsize>
-	std::ostream& operator<<(std::ostream& cout, BigUint<bitsize> toprint)
+	std::ostream& operator<<(std::ostream& cout, selected_type16::BigUint<bitsize> toprint)
+	{
+		bool pad_stopped = 0; // if pad stopped, then print the rest, including zero values
+		bool last_num = 0;
+		uint8_t pad_size;
+	
+		// initialize the pad sizes based on whether the ostream is dec, hex, oct, bin.
+		std::ios_base::fmtflags fmt = cout.flags();
+		if(fmt & std::ios_base::dec) pad_size = 20;
+		else if(fmt & std::ios_base::hex) pad_size = 16; // pad count: 2^64-1=16 base 16 digits
+		else if(fmt & std::ios_base::oct) pad_size = 22;
+		else pad_size = 64; // bin
+		for(uint16_t i=0;i<toprint.op_size;i++) {
+			if(toprint.op[i] != 0x0000000000000000ULL) pad_stopped=1;
+			if(pad_stopped) {
+				if(last_num)
+					cout << std::setfill('0') << std::setw(pad_size) << toprint.op[i];
+				else
+					cout << toprint.op[i]; // no padding
+				last_num = 1; // if not first print, pad
+			}
+		}
+		if(!pad_stopped) // if zero
+			cout << "0";
+		return cout;
+	}
+
+	// output stream operator
+	template<uint32_t bitsize>
+	std::ostream& operator<<(std::ostream& cout, selected_type32::BigUint<bitsize> toprint)
+	{
+		bool pad_stopped = 0; // if pad stopped, then print the rest, including zero values
+		bool last_num = 0;
+		uint8_t pad_size;
+	
+		// initialize the pad sizes based on whether the ostream is dec, hex, oct, bin.
+		std::ios_base::fmtflags fmt = cout.flags();
+		if(fmt & std::ios_base::dec) pad_size = 20;
+		else if(fmt & std::ios_base::hex) pad_size = 16; // pad count: 2^64-1=16 base 16 digits
+		else if(fmt & std::ios_base::oct) pad_size = 22;
+		else pad_size = 64; // bin
+		for(uint16_t i=0;i<toprint.op_size;i++) {
+			if(toprint.op[i] != 0x0000000000000000ULL) pad_stopped=1;
+			if(pad_stopped) {
+				if(last_num)
+					cout << std::setfill('0') << std::setw(pad_size) << toprint.op[i];
+				else
+					cout << toprint.op[i]; // no padding
+				last_num = 1; // if not first print, pad
+			}
+		}
+		if(!pad_stopped) // if zero
+			cout << "0";
+		return cout;
+	}
+	 
+	// output stream operator
+	template<uint64_t bitsize>
+	std::ostream& operator<<(std::ostream& cout, selected_type64::BigUint<bitsize> toprint)
+	{
+		bool pad_stopped = 0; // if pad stopped, then print the rest, including zero values
+		bool last_num = 0;
+		uint8_t pad_size;
+	
+		// initialize the pad sizes based on whether the ostream is dec, hex, oct, bin.
+		std::ios_base::fmtflags fmt = cout.flags();
+		if(fmt & std::ios_base::dec) pad_size = 20;
+		else if(fmt & std::ios_base::hex) pad_size = 16; // pad count: 2^64-1=16 base 16 digits
+		else if(fmt & std::ios_base::oct) pad_size = 22;
+		else pad_size = 64; // bin
+		for(uint16_t i=0;i<toprint.op_size;i++) {
+			if(toprint.op[i] != 0x0000000000000000ULL) pad_stopped=1;
+			if(pad_stopped) {
+				if(last_num)
+					cout << std::setfill('0') << std::setw(pad_size) << toprint.op[i];
+				else
+					cout << toprint.op[i]; // no padding
+				last_num = 1; // if not first print, pad
+			}
+		}
+		if(!pad_stopped) // if zero
+			cout << "0";
+		return cout;
+	}
+	 
+	// output stream operator
+	template<__uint128_t bitsize>
+	std::ostream& operator<<(std::ostream& cout, selected_type128::BigUint<bitsize> toprint)
 	{
 		bool pad_stopped = 0; // if pad stopped, then print the rest, including zero values
 		bool last_num = 0;
@@ -319,8 +477,8 @@ namespace BigInt
 	 
 	 
 	// input stream operator
-	template<size_t bitsize>
-	std::istream& operator>>(std::istream& cin, BigUint<bitsize> &input)
+	template<uint16_t bitsize>
+	std::istream& operator>>(std::istream& cin, selected_type16::BigUint<bitsize> &input)
 	{
 		std::string num;
 		cin >> num;
@@ -328,14 +486,36 @@ namespace BigInt
 		return cin;
 	}
 
-	template<uint16_t bitsize>
-	BigUint<bitsize> pow(BigUint<bitsize> base, BigUint<bitsize> exp);
-	
-	using uint192_t = BigUint<192>;
-	using uint256_t = BigUint<256>;
-	using uint384_t = BigUint<384>;
-	using uint512_t = BigUint<512>;
-	using uint1024_t = BigUint<1024>;
+	// input stream operator
+	template<uint32_t bitsize>
+	std::istream& operator>>(std::istream& cin, selected_type32::BigUint<bitsize> &input)
+	{
+		std::string num;
+		cin >> num;
+		input = num;
+		return cin;
+	}
+
+	// input stream operator
+	template<uint64_t bitsize>
+	std::istream& operator>>(std::istream& cin, selected_type64::BigUint<bitsize> &input)
+	{
+		std::string num;
+		cin >> num;
+		input = num;
+		return cin;
+	}
+
+	// input stream operator
+	template<__uint128_t bitsize>
+	std::istream& operator>>(std::istream& cin, selected_type128::BigUint<bitsize> &input)
+	{
+		std::string num;
+		cin >> num;
+		input = num;
+		return cin;
+	}
+
 }; /* NAMESPACE BIGINT */
 
 // include here because of template class and function

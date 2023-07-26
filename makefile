@@ -1,6 +1,6 @@
 .SUFFIXES: .cpp
-CXX ?= g++
-CXXFLAGS ?= -g -std=c++2b -Wall -pedantic -Wextra # add -O4
+CXX = g++
+CXXFLAGS ?= -std=c++2b -Wall -pedantic -Wextra # add -O4
 CPP = main.cpp # ovverride previous definition of ${CPP} so don't replace = with ?=
 BIGINT_CPP ?= bigint.cpp
 BIGINT ?= ${BIGINT_CPP} bigint.h ${CPP}
@@ -25,13 +25,16 @@ clean:
 	rm -rf ${EXEC} ${TEST_EXEC} ${OBJ}
 
 all: ${BIGINT} ${TEST}
-	${CXX} ${CXXFLAGS} ${CPP} -o ${EXEC}
-	${CXX} ${CXXFLAGS} -c ${BIGINT_CPP} -o ${BIGINT_OBJ}
-	${CXX} ${TEST_CXXFLAGS} -c ${TEST} -o ${TEST_OBJ}
+	${CXX} ${CXXFLAGS} -g ${CPP} -o ${EXEC}
+	${CXX} ${CXXFLAGS} -g -c ${BIGINT_CPP} -o ${BIGINT_OBJ}
+	${CXX} ${TEST_CXXFLAGS} -g -c ${TEST} -o ${TEST_OBJ}
 	${CXX} bigint.o test.o -o ${TEST_EXEC}
 
-run-bigint: ${BIGINT_CPP}
+
+run-bigint: ${BIGINT}
 	${CXX} ${CXXFLAGS} ${CPP} -o ${EXEC} && ./bigint
 
-run-test: ${TEST}
-	${CXX} ${TEST_CXXFLAGS} ${CPP} ${TEST} -o ${TEST_EXEC} && ./test
+run-test: ${TEST} ${BIGINT}
+	${CXX} ${CXXFLAGS} -c ${BIGINT_CPP} -o ${BIGINT_OBJ}
+	${CXX} ${TEST_CXXFLAGS} -c ${TEST} -o ${TEST_OBJ}
+	${CXX} bigint.o test.o -o ${TEST_EXEC} && ./test

@@ -406,6 +406,7 @@ class Benchmark
 	public:
     	static constexpr const __uint128_t num_long_int = ((__uint128_t)0xabcde0123456789fU<<64)|0xffffffffffffffffU;
     	static constexpr const __uint128_t num_long_int2 = ((__uint128_t)0xffffffffffffffffU<<64)|0xffffffffffffffffU;
+
 		_type number = "2337616833552046603458334740849159417653411302789319245661"; // 232-bit hex
 		_type number2 = "2337616833552046603458334740849159417653411302789319245660"; // 232-bit hex
 		_type zero = "0";
@@ -415,9 +416,10 @@ class Benchmark
 		_type and_ex = "13439085734205734"; // 232-bit hex
 		_type example = "4423905842305789076053609538769048324785042058710953420857"; // 232-bit hex
 		_type arithmetic_ex = "134395843534503845740957390690572"; // 232-bit hex
-		_type _2000 ="2000";
-		_type div_ex = "2000309429034920423834902";
-		_type _23049 = "23049";
+		_type _2000 ="2000"; // mul
+		_type div_ex = "2000309429034920423834902"; // div
+		_type _23049 = "23049"; // mod
+
 		Benchmark() = default;
 
 		virtual void reset() {
@@ -887,6 +889,436 @@ class Benchmark
 	}
 };
 
+// uint64_t benchmark tests to compare to
+template<typename _type>
+class UintTBenchmark
+{
+	public:
+		_type number;
+		_type number2;
+		_type zero;
+		_type one;
+		_type two;
+		_type rand;
+		_type and_ex;
+		_type example;
+		_type arithmetic_ex;
+		_type _2000;
+		_type div_ex;
+		_type _23049;
+		UintTBenchmark() {
+			reset();
+
+		}
+
+		virtual void reset() {
+			number        = randuT();
+			number2       = randuT();
+			rand          = randuT();
+			and_ex        = randuT();
+			example       = randuT();
+			arithmetic_ex = randuT();
+			_2000 		= randuT();
+			div_ex		= randuT();
+			_23049		= randuT();
+		}
+
+		uint64_t randuT()
+		{
+			if constexpr(sizeof(_type) == sizeof(__uint128_t)) {
+    			std::random_device randDev;
+    			std::mt19937 generator(randDev() ^ time(NULL));
+    			std::uniform_int_distribution<uint64_t> distr;
+				uint64_t num1 = distr(generator);
+				uint64_t num2 = distr(generator);
+				while(num1 == 0) num1 = distr(generator);
+				while(num2 == 0) num2 = distr(generator);
+				if constexpr(std::is_signed<_type>::value) {
+					return ((__int128_t)num1 << 64) | num2;
+				} else {
+					return ((__uint128_t)num1 << 64) | num2;
+				}
+			} else {
+    			std::random_device randDev;
+    			std::mt19937 generator(randDev() ^ time(NULL));
+    			std::uniform_int_distribution<_type> distr;
+				_type num = distr(generator);
+				while(num == 0) num = distr(generator);
+				return num;
+			}
+		}
+
+		virtual void test_int_assignment() {
+			_type num = (_type)256;
+		}
+
+		// boolean operators (9 functions)
+		// test_bool_and, test_bool_or, test_bool_equal_eq, test_bool_not, test_bool_not_eq, test_bool_less, test_bool_less_eq, test_bool_greater, test_bool_greater_eq
+		virtual void test_bool_not_eq() {
+			bool ret = number != rand;
+		}
+
+		virtual void test_bool_not() {
+			bool ret = !number;
+		}
+
+		virtual void test_bool_less() {
+			bool ret = number2 < number;
+		}
+
+		virtual void test_bool_less_eq() {
+			bool ret = number2 <= number;
+		}
+
+		virtual void test_bool_and() {
+			bool ret = number2 && one; // true, because both are 1 or bigger
+		}
+
+		virtual void test_bool_or() {
+			bool ret = number2 || zero; // true, because num is 1 or bigger
+		}
+
+		virtual void test_bool_equal_eq() {
+			bool ret = number2 == number2; // true, because they are equal
+			
+		}
+
+		virtual void test_bool_greater() {
+			bool ret = number > number2; // true, because num is bigger
+		}
+
+		virtual void test_bool_greater_eq() {
+			bool ret = number >= number2; // true, because num is bigger
+		}
+
+		// bitwise operators (11 functions)
+		// test_bitwise_not, bitwise_and, bitwise_and_eq, bitwise_xor, bitwise_xor_eq, bitwise_rshift,
+		// bitwise_rshift_eq, bitwise_lshift, bitwise_lshift_eq, bitwise_or, bitwise_or_eq
+			virtual void test_bitwise_not() {
+				_type num2 = ~number;
+			}
+			virtual void test_bitwise_and() {
+				_type num3 = number & and_ex; // 232-bit hex
+				
+			}
+			void test_bitwise_and_eq() {
+				number &= and_ex;
+			}
+			virtual void test_bitwise_xor() {
+				_type num3 = number ^ example;
+			}
+			virtual void test_bitwise_xor_eq() {
+				number ^= example;
+			}
+			virtual void test_bitwise_rshift() {
+				_type num2 = number >> _type(2);
+				
+			}
+			virtual void test_bitwise_rshift_eq() {
+				number >>= _type(2);
+				
+			}
+			virtual void test_bitwise_lshift() {
+				_type num2 = number << _type(7);
+			}	
+			virtual void test_bitwise_lshift_eq() {
+				number <<= 7;
+			}
+			virtual void test_bitwise_or() {
+				_type num3 = number | example;
+			}
+			virtual void test_bitwise_or_eq() {
+				number |= example;
+			}	
+
+		// basic arithmetic (11 functions)
+		// test_addition, test_addition_eq, test_subtraction, test_subtraction_eq, test_mul, test_mul_eq, test_div, test_div_eq, test_mod, test_mod_eq, test_pow
+		virtual void test_addition() {
+			_type num3 = number + number;
+		}
+
+		virtual void test_addition_eq() {
+			number += number;
+		}
+
+		virtual void test_subtraction() {
+			// python3	SUBTRACTION TEST, CORRECT for all cases:
+			/// hex(0x134395843534503845740957390690572-0x2337616833552046603458334740849159417653411302789319245661 + (1 << 256))
+			///'0xffffffdcc89e97ccaadfb99fcba7ccb9f3b4c6ea11ceb043443e1ce07744af11'
+			_type num3 = number - arithmetic_ex;
+		}
+
+		virtual void test_subtraction_eq() {
+			number -= arithmetic_ex;
+		}
+
+		virtual void test_mul() {
+			_type num3 = number * _2000;
+		}
+
+		virtual void test_mul_eq() {
+			number *= _2000;
+		}
+
+		virtual void test_div() {
+			_type num3 = number / div_ex;
+		}
+
+		virtual void test_div_eq() {
+			number /= div_ex;
+		}
+
+		virtual void test_mod() {
+			_type num3 = number % _23049;
+		}
+
+		virtual void test_mod_eq() {
+			number %= _23049;
+		}
+
+		virtual void test_pow() {
+			_type num3 = pow(number, two);
+		}
+
+		// incrementation and decrementation (2 functions)
+		// test_inc, test_dec
+		virtual void test_inc() {
+			number++;
+		}
+
+		virtual void test_dec() {
+			number--;
+		}
+
+	std::chrono::high_resolution_clock::time_point timer_starts[34];
+	std::chrono::high_resolution_clock::time_point timer_ends[34];
+	void benchmark_once()
+	{
+		// test_chararr_assignment, test_str_assignment, test_long_chararr_assignment, test_long_str_assignment, test_long_hex_assignment, test_int_assignment, test_long_int_assignment
+		timer_starts[0] = std::chrono::high_resolution_clock::now();
+		test_int_assignment();
+		timer_ends[0] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[1] = std::chrono::high_resolution_clock::now();
+		test_bool_and();
+		timer_ends[1] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[2] = std::chrono::high_resolution_clock::now();
+		test_bool_or();
+		timer_ends[2] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[3] = std::chrono::high_resolution_clock::now();
+		test_bool_equal_eq();
+		timer_ends[3] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[4] = std::chrono::high_resolution_clock::now();
+		test_bool_not();
+		timer_ends[4] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[5] = std::chrono::high_resolution_clock::now();
+		test_bool_not_eq();
+		timer_ends[5] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[6] = std::chrono::high_resolution_clock::now();
+		test_bool_less();
+		timer_ends[6] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		// test_bool_and, test_bool_or, test_bool_equal_eq, test_bool_not, test_bool_not_eq, test_bool_less, test_bool_less_eq, test_bool_greater, test_bool_greater_eq
+		timer_starts[7] = std::chrono::high_resolution_clock::now();
+		test_bool_less_eq();
+		timer_ends[7] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[8] = std::chrono::high_resolution_clock::now();
+		test_bool_greater();
+		timer_ends[8] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[9] = std::chrono::high_resolution_clock::now();
+		test_bool_greater_eq();
+		timer_ends[9] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[10] = std::chrono::high_resolution_clock::now();
+		test_bool_less_eq();
+		timer_ends[10] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[11] = std::chrono::high_resolution_clock::now();
+		test_bitwise_not();
+		timer_ends[11] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[12] = std::chrono::high_resolution_clock::now();
+		test_bitwise_and();
+		timer_ends[12] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[13] = std::chrono::high_resolution_clock::now();
+		test_bitwise_and_eq();
+		timer_ends[13] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[14] = std::chrono::high_resolution_clock::now();
+		test_bitwise_xor();
+		timer_ends[14] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[15] = std::chrono::high_resolution_clock::now();
+		test_bitwise_xor_eq();
+		timer_ends[15] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[16] = std::chrono::high_resolution_clock::now();
+		test_bitwise_rshift();
+		timer_ends[16] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		// test_bitwise_not, bitwise_and, bitwise_and_eq, bitwise_xor, bitwise_xor_eq, bitwise_rshift,
+		// bitwise_rshift_eq, bitwise_lshift, bitwise_lshift_eq, bitwise_or, bitwise_or_eq
+		timer_starts[17] = std::chrono::high_resolution_clock::now();
+		test_bitwise_rshift_eq();
+		timer_ends[17] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[18] = std::chrono::high_resolution_clock::now();
+		test_bitwise_lshift();
+		timer_ends[18] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[19] = std::chrono::high_resolution_clock::now();
+		test_bitwise_lshift_eq();
+		timer_ends[19] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[20] = std::chrono::high_resolution_clock::now();
+		test_bitwise_or();
+		timer_ends[20] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[21] = std::chrono::high_resolution_clock::now();
+		test_bitwise_or_eq();
+		timer_ends[21] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[22] = std::chrono::high_resolution_clock::now();
+		test_addition();
+		timer_ends[22] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[22] = std::chrono::high_resolution_clock::now();
+		test_addition_eq();
+		timer_ends[22] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[23] = std::chrono::high_resolution_clock::now();
+		test_subtraction();
+		timer_ends[23] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[24] = std::chrono::high_resolution_clock::now();
+		test_subtraction_eq();
+		timer_ends[24] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[25] = std::chrono::high_resolution_clock::now();
+		test_mul();
+		timer_ends[25] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[26] = std::chrono::high_resolution_clock::now();
+		test_mul_eq();
+		timer_ends[26] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		// test_addition, test_addition_eq, test_subtraction, test_subtraction_eq, test_mul, test_mul_eq, test_div, test_div_eq, test_mod, test_mod_eq, test_pow
+		timer_starts[27] = std::chrono::high_resolution_clock::now();
+		test_div();
+		timer_ends[27] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[28] = std::chrono::high_resolution_clock::now();
+		test_div_eq();
+		timer_ends[28] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[29] = std::chrono::high_resolution_clock::now();
+		test_mod();
+		timer_ends[29] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[30] = std::chrono::high_resolution_clock::now();
+		test_mod_eq();
+		timer_ends[30] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[31] = std::chrono::high_resolution_clock::now();
+		test_pow();
+		timer_ends[31] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		// test_inc, test_dec
+		timer_starts[32] = std::chrono::high_resolution_clock::now();
+		test_inc();
+		timer_ends[32] = std::chrono::high_resolution_clock::now();
+		reset();
+	
+		timer_starts[33] = std::chrono::high_resolution_clock::now();
+		test_dec();
+		timer_ends[33] = std::chrono::high_resolution_clock::now();
+		reset();
+	}
+	
+};
+
+template<typename _type>
+uint64_t *benchmark_tests_T(uint64_t &total_time, uint32_t count=100)
+{
+	uint16_t size = sizeof(UintTBenchmark<_type>::timer_starts)/
+  				 		   sizeof(UintTBenchmark<_type>::timer_starts[0]);
+	uint64_t *average_timeT = new uint64_t[size];
+
+	// assign times to zero
+	for(uint16_t j=0;j<size;j++) {
+		average_timeT[j] = 0;
+	}
+
+	for(uint32_t i=0;i<count;i++) {
+		UintTBenchmark<_type> benchmarker = UintTBenchmark<_type>();
+		benchmarker.benchmark_once();
+		for(uint16_t j=0;j<size;j++) {
+			auto timer = (benchmarker.timer_ends[j]-benchmarker.timer_starts[j]); // divide by count to get average
+			average_timeT[j] += timer.count();
+		}
+	}
+
+	for(uint16_t j=0;j<size;j++) {
+		average_timeT[j] /= count;
+	}
+	std::string all_functions[34] = {"test_int_assignment =", "test_bool_and &&", "test_bool_or ||", "test_bool_equal_eq ==", "test_bool_not !", "test_bool_not_eq !=", "test_bool_less <", "test_bool_less_eq <=", "test_bool_greater >", "test_bool_greater_eq >=", "test_bitwise_not ~", "bitwise_and &", "bitwise_and_eq &=", "bitwise_xor ^", "bitwise_xor_eq ^=", "bitwise_rshift >>", "bitwise_rshift_eq >>=", "bitwise_lshift <<", "bitwise_lshift_eq <<=", "bitwise_or |", "bitwise_or_eq |=", "test_addition +", "test_addition_eq +=", "test_subtraction -", "test_subtraction_eq -=", "test_mul *", "test_mul_eq *=", "test_div /", "test_div_eq /=", "test_mod %", "test_mod_eq %=", "test_pow pow()", "test_inc ++", "test_dec --"};
+
+	total_time = 0;
+	for(uint16_t i=0;i<size;i++) {
+		auto timer = std::chrono::nanoseconds(average_timeT[i]); // divide by count to get average
+  		std::chrono::microseconds micro = std::chrono::duration_cast< std::chrono::microseconds >( timer );
+  		std::chrono::milliseconds mili = std::chrono::duration_cast< std::chrono::milliseconds >( timer );
+  		std::chrono::seconds second = std::chrono::duration_cast< std::chrono::seconds >( timer );
+		total_time+=timer.count();
+
+		std::cout << "\nfunction: " << all_functions[i];
+		std::cout << "\ntimer = \t" << timer << "\t:\t" << micro << "\t:\t" << mili << "\t:\t" << second << "\t|" << std::endl;
+	}
+	std::cout << std::endl << "Total time: " << total_time << "ns" << std::endl;
+	return average_timeT;
+}
+
 int main()
 {
 	typedef uint32_t bitsize_t;
@@ -902,8 +1334,36 @@ int main()
 
 	/************* BENCHMARK TESTS *************/
 
-		uint64_t average_time[sizeof(Benchmark<biguint_t, bitsize_t, bitsize>::timer_starts)/
-  					 				 sizeof(Benchmark<biguint_t, bitsize_t, bitsize>::timer_starts[0])];
+	uint64_t average_time[sizeof(Benchmark<biguint_t, bitsize_t, bitsize>::timer_starts)/
+  				 				 sizeof(Benchmark<biguint_t, bitsize_t, bitsize>::timer_starts[0])];
+
+	uint64_t int8_time, int16_time, int32_time, int64_time, int128_time,
+			 uint8_time, uint16_time, uint32_time, uint64_time, uint128_time;
+
+	// size of average time int pointers
+	uint16_t size = sizeof(UintTBenchmark<int8_t>::timer_starts)/
+  				 		   sizeof(UintTBenchmark<int8_t>::timer_starts[0]);
+	std::cout << "\n\n---------------------\nAVERAGE TIME FOR int8:\n---------------------\n";
+	uint64_t *average_time_int8  = benchmark_tests_T<int8_t>(int8_time, count);
+	std::cout << "\n\n----------------------\nAVERAGE TIME FOR int16:\n----------------------\n";
+	uint64_t *average_time_int16 = benchmark_tests_T<int16_t>(int16_time, count);
+	std::cout << "\n\n----------------------\nAVERAGE TIME FOR int32:\n----------------------\n";
+	uint64_t *average_time_int32 = benchmark_tests_T<int32_t>(int32_time, count);
+	std::cout << "\n\n----------------------\nAVERAGE TIME FOR int64:\n----------------------\n";
+	uint64_t *average_time_int64 = benchmark_tests_T<int64_t>(int64_time, count);
+	std::cout << "\n\n-----------------------\nAVERAGE TIME FOR int128:\n-----------------------\n";
+	uint64_t *average_time_int128 = benchmark_tests_T<__int128_t>(int128_time, count);
+
+	std::cout << "\n\n----------------------\nAVERAGE TIME FOR uint8:\n----------------------\n";
+	uint64_t *average_time_uint8  = benchmark_tests_T<uint8_t>(uint8_time, count);
+	std::cout << "\n\n-----------------------\nAVERAGE TIME FOR uint16:\n-----------------------\n";
+	uint64_t *average_time_uint16 = benchmark_tests_T<uint16_t>(uint16_time, count);
+	std::cout << "\n\n-----------------------\nAVERAGE TIME FOR uint32:\n-----------------------\n";
+	uint64_t *average_time_uint32 = benchmark_tests_T<uint32_t>(uint32_time, count);
+	std::cout << "\n\n-----------------------\nAVERAGE TIME FOR uint64:\n-----------------------\n";
+	uint64_t *average_time_uint64 = benchmark_tests_T<uint64_t>(uint64_time, count);
+	std::cout << "\n\n------------------------\nAVERAGE TIME FOR uint128:\n------------------------\n";
+	uint64_t *average_time_uint128 = benchmark_tests_T<__uint128_t>(uint128_time, count);
 
 	// assign times to zero
 	for(uint16_t j=0;j<sizeof(average_time)/sizeof(average_time[0]);j++) {
@@ -928,10 +1388,28 @@ int main()
 		total_time_bench+=timer.count();
 
 		std::cout << "\nfunction: " << all_functions[i];
-		std::cout << "\ntimer = \t" << timer << "\t:\t" << micro << "\t:\t" << mili << "\t:\t" << second << "\t|" << std::endl;
+		std::cout << "\ntimer = \t" << timer << "\t:\t" << micro << "\t:\t" << mili << "\t:\t" << second << "\t|";
+
+		if(i == 7) i++;
+		// compare to uint64 proportionally, meaning if 512-bits / 64-bits then compare the ratio
+		// if(i > 5 and i != 7 and i <40) std::cout << "\tuint64: " << average_time_uint64[i-6] << "\tbig/u64: " << ((double)timer.count()/(bitsize/64))/average_time_uint64[i-5];
+		// compare to uint64 upproportionally
+		if(i >= 5 and i != 6 and i <40) std::cout << "\tuint64: " << average_time_uint64[i-6] << "ns\tbig/u64: " << (double)timer.count()/average_time_uint64[i-6];
+		std::cout << std::endl;
 	}
 	std::cout << std::endl << "Total time: " << total_time_bench/1000 << "µs" << std::endl;
 
+	delete[] average_time_int8;
+	delete[] average_time_int16;
+	delete[] average_time_int32;
+	delete[] average_time_int64;
+	delete[] average_time_int128;
+
+	delete[] average_time_uint8;
+	delete[] average_time_uint16;
+	delete[] average_time_uint32;
+	delete[] average_time_uint64;
+	delete[] average_time_uint128;
 	return 0;
 }
 

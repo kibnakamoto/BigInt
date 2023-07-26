@@ -659,8 +659,8 @@ class Benchmark
 			uint64_t first_index = number[0];
 		}
 
-	std::chrono::system_clock::time_point timer_starts[42];
-	std::chrono::system_clock::time_point timer_ends[42];
+	std::chrono::high_resolution_clock::time_point timer_starts[42];
+	std::chrono::high_resolution_clock::time_point timer_ends[42];
 	void benchmark_once()
 	{
 		// test_chararr_assignment, test_str_assignment, test_long_chararr_assignment, test_long_str_assignment, test_long_hex_assignment, test_int_assignment, test_long_int_assignment
@@ -890,7 +890,7 @@ class Benchmark
 int main()
 {
 	typedef uint32_t bitsize_t;
-	constexpr const static bitsize_t bitsize = 256; // 2147483648; // doesn't always work, check rand_str generation
+	constexpr const static bitsize_t bitsize = UINT32_MAX; // 2147483648;
 	typedef LargeUint<bitsize> biguint_t;
 	static uint32_t count=100;
 
@@ -901,17 +901,27 @@ int main()
 	std::string all_functions[42] = {"test_chararr_assignment =", "test_str_assignment =", "test_long_chararr_assignment =", "test_long_str_assignment =", "test_long_hex_assignment =", "test_int_assignment =", "test_long_int_assignment =", "test_bool_and &&", "test_bool_or ||", "test_bool_equal_eq ==", "test_bool_not !", "test_bool_not_eq !=", "test_bool_less <", "test_bool_less_eq <=", "test_bool_greater >", "test_bool_greater_eq >=", "test_bitwise_not ~", "bitwise_and &", "bitwise_and_eq &=", "bitwise_xor ^", "bitwise_xor_eq ^=", "bitwise_rshift >>", "bitwise_rshift_eq >>=", "bitwise_lshift <<", "bitwise_lshift_eq <<=", "bitwise_or |", "bitwise_or_eq |=", "test_addition +", "test_addition_eq +=", "test_subtraction -", "test_subtraction_eq -=", "test_mul *", "test_mul_eq *=", "test_div /", "test_div_eq /=", "test_mod %", "test_mod_eq %=", "test_pow pow()", "test_inc ++", "test_dec --", "test_index_bit []", "test_index_uint64 []"};
 
 	/************* BENCHMARK TESTS *************/
-	Benchmark<biguint_t, bitsize_t, bitsize> benchmarker = Benchmark<biguint_t, bitsize_t, bitsize>();
 
+		uint64_t average_time[sizeof(Benchmark<biguint_t, bitsize_t, bitsize>::timer_starts)/
+  					 				 sizeof(Benchmark<biguint_t, bitsize_t, bitsize>::timer_starts[0])];
+
+	// assign times to zero
+	for(uint16_t j=0;j<sizeof(average_time)/sizeof(average_time[0]);j++) {
+		average_time[j] = 0;
+	}
 	for(uint32_t i=0;i<count;i++) {
+		Benchmark<biguint_t, bitsize_t, bitsize> benchmarker = Benchmark<biguint_t, bitsize_t, bitsize>();
 		benchmarker.benchmark_once();
 		benchmarker.randomize();
-
+		for(uint16_t j=0;j<sizeof(average_time)/sizeof(average_time[0]);j++) {
+			auto timer = (benchmarker.timer_ends[j]-benchmarker.timer_starts[j]); // divide by count to get average
+			average_time[j] += timer.count();
+		}
 	}
 
 	uint64_t total_time_bench = 0;
-	for(uint16_t i=0;i<sizeof(benchmarker.timer_starts)/sizeof(benchmarker.timer_starts[0]);i++) {
-		auto timer = (benchmarker.timer_ends[i]-benchmarker.timer_starts[i]);///count; // divide by count to get average
+	for(uint16_t i=0;i<sizeof(average_time)/sizeof(average_time[0]);i++) {
+		auto timer = std::chrono::nanoseconds(average_time[i]/count); // divide by count to get average
   		std::chrono::microseconds micro = std::chrono::duration_cast< std::chrono::microseconds >( timer );
   		std::chrono::milliseconds mili = std::chrono::duration_cast< std::chrono::milliseconds >( timer );
   		std::chrono::seconds second = std::chrono::duration_cast< std::chrono::seconds >( timer );

@@ -813,29 +813,6 @@ namespace BigInt
 			}
 		}
 
-		// std::stringstream buf;
-		// for(bitsize_t i=0;i<op_size;i++) {
-		// 	std::bitset<64> tmp(op[i]);
-		// 	buf << tmp.to_string();
-		// }
-		// std::string str;
-		// if constexpr(bitsize >= 4194304) {
-		// 	std::bitset<bitsize> *bits = new std::bitset<bitsize>(buf.str());
-		// 	*bits <<= num;
-		// 	str = (*bits).to_string();
-		// 	delete bits;
-		// } else {
-		// 	std::bitset<bitsize> bits(buf.str());
-		// 	bits <<= num;
-		// 	str = (bits).to_string();
-		// }
-		// buf.clear();
-		// std::string out = "";
-		// for(bitsize_t i=0;i<op_size;i++) {
-		// 	std::bitset<64> buffer(str.substr(i*64, i*64+64));
-		// 	op[i] = buffer.to_ullong();
-		// }
-
 		return *this;
 	}
 

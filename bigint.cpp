@@ -675,11 +675,13 @@ namespace BigInt
 	[[nodiscard("discarded BigUint operator>>")]]
 	constexpr SelectType<bitsize_t>::BigUint<bitsize> SelectType<bitsize_t>::BigUint<bitsize>::operator>>(const bitsize_t &num)
 	{
-		uint64_t *ret = new uint64_t[op_size];
 		if(num >= bitsize) {
-			for(bitsize_t i=0;i<op_size;i++) ret[i] = 0;
-			return BigUint<bitsize>(ret, op_size);
+			uint64_t *ret = (uint64_t*)calloc(8, op_size);
+			auto num = BigUint<bitsize>(ret, op_size);
+			free(ret);
+			return num;
 		}
+		uint64_t *ret = new uint64_t[op_size];
 
 		std::stringstream buf;
 		for(bitsize_t i=0;i<op_size;i++) {
@@ -750,11 +752,13 @@ namespace BigInt
 	[[nodiscard("discarded BigUint operator<<")]]
 	constexpr SelectType<bitsize_t>::BigUint<bitsize> SelectType<bitsize_t>::BigUint<bitsize>::operator<<(const bitsize_t &num)
 	{
-		uint64_t *ret = new uint64_t[op_size];
 		if(num >= bitsize) {
-			for(bitsize_t i=0;i<op_size;i++) ret[i] = 0;
-			return BigUint<bitsize>(ret, op_size);
+			uint64_t *ret = (uint64_t*)calloc(8, op_size);
+			auto num = BigUint<bitsize>(ret, op_size);
+			free(ret);
+			return num;
 		}
+		uint64_t *ret = new uint64_t[op_size];
 
 		std::stringstream buf;
 		for(bitsize_t i=0;i<op_size;i++) {

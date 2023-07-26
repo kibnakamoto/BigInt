@@ -890,8 +890,8 @@ class Benchmark
 int main()
 {
 	typedef uint32_t bitsize_t;
-	constexpr const static bitsize_t bitsize = UINT32_MAX; // 2147483648;
-	typedef LargeUint<bitsize> biguint_t;
+	constexpr const static bitsize_t bitsize = 512; // 2147483648;
+	typedef HugeUint<bitsize> biguint_t;
 	static uint32_t count=100;
 
 	/************* VALUE TESTS *************/

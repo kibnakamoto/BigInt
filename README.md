@@ -24,3 +24,5 @@ LargeUint<256> num;
 HugeUint<256> num;
 YugeUint<256> num;
 ```
+
+Works fastest for 512-bit numbers. So using 512-bit numbers are faster than using 256-bit numbers

@@ -759,30 +759,30 @@ namespace BigInt
 			return num;
 		}
 		uint64_t *ret = new uint64_t[op_size];
+		memcpy(ret, op, 8*op_size);
 
-		std::stringstream buf;
-		for(bitsize_t i=0;i<op_size;i++) {
-			std::bitset<64> tmp(op[i]);
-			buf << tmp.to_string();
+		bitsize_t shift = num;
+		bitsize_t div = shift/64;
+		bitsize_t ind = op_size-div;
+		if(shift>=64) {
+		 	for(bitsize_t i=0;i<ind;i++) ret[i] = ret[i+div];
+		 	for(bitsize_t i=op_size-div;i<op_size;i++) ret[i] = 0;
 		}
-		// if bitsize is larger than 2^19 bytes, don't use stack
-		std::string str;
-		if constexpr(bitsize >= 4194304) {
-			std::bitset<bitsize> *bits = new std::bitset<bitsize>(buf.str());
-			*bits <<= num;
-			str = (*bits).to_string();
-			delete bits;
-		} else {
-			std::bitset<bitsize> bits(buf.str());
-			bits <<= num;
-			str = (bits).to_string();
+		shift %= 64;
+		if(shift != 0) {
+			for(bitsize_t i=0;i<ind;i++) {
+				__uint128_t tmp = ret[i] << shift;
+				if(tmp > UINT64_MAX) {
+					ret[i+1] |= tmp >> 64;
+					// move overflow to next index
+				} else {
+					ret[i] = tmp;
+				}
+				std::cout << std::endl << ret[i];
+			}
+			std::cout << std::endl;
 		}
-		buf.clear();
-		std::string out = "";
-		for(bitsize_t i=0;i<op_size;i++) {
-			std::bitset<64> buffer(str.substr(i*64, i*64+64));
-			ret[i] = buffer.to_ullong();
-		}
+
 		auto newint = BigUint<bitsize>(ret, op_size);
 		delete[] ret;
 		return newint;

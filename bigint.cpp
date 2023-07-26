@@ -772,15 +772,12 @@ namespace BigInt
 		if(shift != 0) {
 			for(bitsize_t i=0;i<ind;i++) {
 				__uint128_t tmp = ret[i] << shift;
-				if(tmp > UINT64_MAX) {
+				if(tmp > UINT64_MAX) { // move overflow to next index
 					ret[i+1] |= tmp >> 64;
-					// move overflow to next index
 				} else {
 					ret[i] = tmp;
 				}
-				std::cout << std::endl << ret[i];
 			}
-			std::cout << std::endl;
 		}
 
 		auto newint = BigUint<bitsize>(ret, op_size);
@@ -796,28 +793,48 @@ namespace BigInt
 			for(bitsize_t i=0;i<op_size;i++) op[i] = 0;
 			return *this;
 		}
-		std::stringstream buf;
-		for(bitsize_t i=0;i<op_size;i++) {
-			std::bitset<64> tmp(op[i]);
-			buf << tmp.to_string();
+
+		bitsize_t shift = num;
+		bitsize_t div = shift/64;
+		bitsize_t ind = op_size-div;
+		if(shift>=64) {
+		 	for(bitsize_t i=0;i<ind;i++) op[i] = op[i+div];
+		 	for(bitsize_t i=op_size-div;i<op_size;i++) op[i] = 0;
 		}
-		std::string str;
-		if constexpr(bitsize >= 4194304) {
-			std::bitset<bitsize> *bits = new std::bitset<bitsize>(buf.str());
-			*bits <<= num;
-			str = (*bits).to_string();
-			delete bits;
-		} else {
-			std::bitset<bitsize> bits(buf.str());
-			bits <<= num;
-			str = (bits).to_string();
+		shift %= 64;
+		if(shift != 0) {
+			for(bitsize_t i=0;i<ind;i++) {
+				__uint128_t tmp = op[i] << shift;
+				if(tmp > UINT64_MAX) { // move overflow to next index
+					op[i+1] |= tmp >> 64;
+				} else {
+					op[i] = tmp;
+				}
+			}
 		}
-		buf.clear();
-		std::string out = "";
-		for(bitsize_t i=0;i<op_size;i++) {
-			std::bitset<64> buffer(str.substr(i*64, i*64+64));
-			op[i] = buffer.to_ullong();
-		}
+
+		// std::stringstream buf;
+		// for(bitsize_t i=0;i<op_size;i++) {
+		// 	std::bitset<64> tmp(op[i]);
+		// 	buf << tmp.to_string();
+		// }
+		// std::string str;
+		// if constexpr(bitsize >= 4194304) {
+		// 	std::bitset<bitsize> *bits = new std::bitset<bitsize>(buf.str());
+		// 	*bits <<= num;
+		// 	str = (*bits).to_string();
+		// 	delete bits;
+		// } else {
+		// 	std::bitset<bitsize> bits(buf.str());
+		// 	bits <<= num;
+		// 	str = (bits).to_string();
+		// }
+		// buf.clear();
+		// std::string out = "";
+		// for(bitsize_t i=0;i<op_size;i++) {
+		// 	std::bitset<64> buffer(str.substr(i*64, i*64+64));
+		// 	op[i] = buffer.to_ullong();
+		// }
 
 		return *this;
 	}

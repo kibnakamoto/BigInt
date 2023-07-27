@@ -17,8 +17,6 @@
 
 // NOTE: all operators work for the same op size. Maybe remove the conditions that define it otherwise
 
-// TODO: for shifting operators: make sure it's using stack when smaller than stacksize, else use heap. Currently only at heap
-
 namespace BigInt
 {
 	template<typename bitsize_t>
@@ -498,7 +496,7 @@ namespace BigInt
 		BigUint<bitsize> ret = 0;
 		while(num > "0") {
 			if(num & "1") ret += new_op;
-			new_op <<= 1;
+			new_op <<= 1; // try replacing with += new_op
 			num >>= 1;
 		}
 		delete[] o;
@@ -682,31 +680,26 @@ namespace BigInt
 			return num;
 		}
 		uint64_t *ret = new uint64_t[op_size];
+		memcpy(ret, op, 8*op_size);
 
-		std::stringstream buf;
-		for(bitsize_t i=0;i<op_size;i++) {
-			std::bitset<64> tmp(op[i]);
-			buf << tmp.to_string();
+		bitsize_t shift = num;
+		bitsize_t div = shift/64;
+		bitsize_t ind = op_size-div;
+		if(shift>=64) {
+		 	for(bitsize_t i=ind;i<op_size;i++) ret[i] = ret[i-ind];
+		 	for(bitsize_t i=0;i<ind;i++) ret[i] = 0;
 		}
+		shift %= 64;
+		if(shift != 0) {
+			for(bitsize_t i=ind;i --> 0;) {
+				ret[i] >>= shift;
+				//ret[i] |= (uint64_t)1 << (64-shift); // why 0x8000000000000000 (2^63)
+			}
+			std::cout << "\n" << div;
+		}
+			std::cout << std::endl;
+			std::cout << std::endl;
 
-		// if bitsize is larger than 2^19 bytes, don't use stack
-		std::string str;
-		if constexpr(bitsize >= 4194304) {
-			std::bitset<bitsize> *bits = new std::bitset<bitsize>(buf.str());
-			*bits >>= num;
-			str = (*bits).to_string();
-			delete bits;
-		} else {
-			std::bitset<bitsize> bits(buf.str());
-			bits >>= num;
-			str = (bits).to_string();
-		}
-		buf.clear();
-		std::string out = "";
-		for(bitsize_t i=0;i<op_size;i++) {
-			std::bitset<64> buffer(str.substr(i*64, i*64+64));
-			ret[i] = buffer.to_ullong();
-		}
 
 		auto newint = BigUint<bitsize>(ret, op_size);
 		delete[] ret;
@@ -766,14 +759,15 @@ namespace BigInt
 		bitsize_t ind = op_size-div;
 		if(shift>=64) {
 		 	for(bitsize_t i=0;i<ind;i++) ret[i] = ret[i+div];
-		 	for(bitsize_t i=op_size-div;i<op_size;i++) ret[i] = 0;
+		 	for(bitsize_t i=ind;i<op_size;i++) ret[i] = 0;
 		}
 		shift %= 64;
 		if(shift != 0) {
 			for(bitsize_t i=0;i<ind;i++) {
-				__uint128_t tmp = ret[i] << shift;
+				__uint128_t tmp = (__uint128_t)ret[i] << shift;
 				if(tmp > UINT64_MAX) { // move overflow to next index
-					ret[i+1] |= tmp >> 64;
+					ret[i-1] |= tmp >> 64;
+					ret[i] = tmp;
 				} else {
 					ret[i] = tmp;
 				}
@@ -799,14 +793,15 @@ namespace BigInt
 		bitsize_t ind = op_size-div;
 		if(shift>=64) {
 		 	for(bitsize_t i=0;i<ind;i++) op[i] = op[i+div];
-		 	for(bitsize_t i=op_size-div;i<op_size;i++) op[i] = 0;
+		 	for(bitsize_t i=ind;i<op_size;i++) op[i] = 0;
 		}
 		shift %= 64;
 		if(shift != 0) {
 			for(bitsize_t i=0;i<ind;i++) {
-				__uint128_t tmp = op[i] << shift;
+				__uint128_t tmp = (__uint128_t)op[i] << shift;
 				if(tmp > UINT64_MAX) { // move overflow to next index
-					op[i+1] |= tmp >> 64;
+					op[i-1] |= tmp >> 64;
+					op[i] = tmp;
 				} else {
 					op[i] = tmp;
 				}

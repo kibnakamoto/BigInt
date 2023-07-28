@@ -11,6 +11,7 @@
 #include <sstream>
 #include <cassert>
 #include <vector>
+#include <limits>
 
 
 #include "bigint.h"
@@ -497,7 +498,7 @@ namespace BigInt
 		while(num > "0") {
 			if(num & "1") ret += new_op;
 			new_op <<= 1; // try replacing with += new_op
-			num >>= 1;
+			num >>= 1; // try replacing with div
 		}
 		delete[] o;
 		return ret;
@@ -684,22 +685,21 @@ namespace BigInt
 
 		bitsize_t shift = num;
 		bitsize_t div = shift/64;
-		bitsize_t ind = op_size-div;
 		if(shift>=64) {
-		 	for(bitsize_t i=ind;i<op_size;i++) ret[i] = ret[i-ind];
-		 	for(bitsize_t i=0;i<ind;i++) ret[i] = 0;
+		 	for(bitsize_t i=div;i<op_size;i++) ret[i] = op[i-div];
+		 	for(bitsize_t i=0;i<div;i++) ret[i] = 0;
 		}
 		shift %= 64;
 		if(shift != 0) {
-			for(bitsize_t i=ind;i --> 0;) {
+			for(bitsize_t i=div;i<op_size;i++) {
 				ret[i] >>= shift;
-				//ret[i] |= (uint64_t)1 << (64-shift); // why 0x8000000000000000 (2^63)
+				if(i != div) {
+					// hex((0x5520466034583347 >> 2) | ((0x2337616833<<62) & (2**64-1)))
+					// std::cout << std::endl << "solution:" << (uint64_t)(ret[i]  |  ( ((__uint128_t)op[i-1] << 62) & UINT64_MAX)) << std::endl;
+					ret[i] |= op[i-1] << (64-shift);
+				}
 			}
-			std::cout << "\n" << div;
 		}
-			std::cout << std::endl;
-			std::cout << std::endl;
-
 
 		auto newint = BigUint<bitsize>(ret, op_size);
 		delete[] ret;
@@ -714,29 +714,28 @@ namespace BigInt
 			for(bitsize_t i=0;i<op_size;i++) op[i] = 0;
 			return *this;
 		}
-		std::stringstream buf;
-		for(bitsize_t i=0;i<op_size;i++) {
-			std::bitset<64> tmp(op[i]);
-			buf << tmp.to_string();
+
+		uint64_t *_copy = new uint64_t[op_size];
+		memcpy(_copy, op, 8*op_size);
+
+		bitsize_t shift = num;
+		bitsize_t div = shift/64;
+		if(shift>=64) {
+		 	for(bitsize_t i=div;i<op_size;i++) op[i] = op[i-div];
+		 	for(bitsize_t i=0;i<div;i++) op[i] = 0;
 		}
-		// if bitsize is larger than 2^19 bytes, don't use stack
-		std::string str;
-		if constexpr(bitsize >= 4194304) {
-			std::bitset<bitsize> *bits = new std::bitset<bitsize>(buf.str());
-			*bits >>= num;
-			str = (*bits).to_string();
-			delete bits;
-		} else {
-			std::bitset<bitsize> bits(buf.str());
-			bits >>= num;
-			str = (bits).to_string();
+
+		shift %= 64;
+		if(shift != 0) {
+			for(bitsize_t i=div;i<op_size;i++) {
+				op[i] >>= shift;
+				if(i != div) {
+					op[i] |= _copy[i-1] << (64-shift);
+				}
+			}
 		}
-		buf.clear();
-		std::string out = "";
-		for(bitsize_t i=0;i<op_size;i++) {
-			std::bitset<64> buffer(str.substr(i*64, i*64+64));
-			op[i] = buffer.to_ullong();
-		}
+
+		delete[] _copy;
 		return *this;
 	}
 

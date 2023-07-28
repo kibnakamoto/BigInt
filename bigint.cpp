@@ -764,7 +764,7 @@ namespace BigInt
 		if(shift != 0) {
 			for(bitsize_t i=0;i<ind;i++) {
 				__uint128_t tmp = (__uint128_t)ret[i] << shift;
-				if(tmp > UINT64_MAX) { // move overflow to next index
+				if(tmp > UINT64_MAX and i != 0) { // move overflow to next index
 					ret[i-1] |= tmp >> 64;
 					ret[i] = tmp;
 				} else {

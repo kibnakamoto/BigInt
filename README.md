@@ -26,3 +26,12 @@ YugeUint<256> num;
 ```
 
 Works fastest for 512-bit numbers. So using 512-bit numbers are faster than using 256-bit numbers
+
+
+The library uses heap memory uint64_t pointer. There cannot be a stackoverflow. Except on the ostream operator. For using the ostream operator, if there is a Segmentation Fault, it'll be caused by stackoverflow, try using the print function:
+```
+uint256_t num = 43058454390534;
+num.print();
+```
+
+the print function prints rather than add the whole number to stack first.

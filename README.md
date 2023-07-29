@@ -35,3 +35,11 @@ num.print();
 ```
 
 the print function prints rather than add the whole number to stack first.
+
+
+
+
+all stream operators including ostream or the print function cannot print decimals correctly. Use std::hex or std::oct:
+```
+std::cout << std::hex << num;
+```

@@ -1,6 +1,7 @@
 // main file of BigInt, a demo of how to use library
 #include <iostream>
 #include <string.h>
+#include <sstream>
 
 #include "bigint.h"
 

@@ -177,6 +177,43 @@ namespace BigInt
 					}
 					return op[0];
 				}
+
+				template<typename stringstream_type> // stringstream or ostringstream
+				void to_ostringstream(stringstream_type &ss)
+				{
+					bool pad_stopped = 0; // if pad stopped, then print the rest, including zero values
+					bool last_num = 0;
+					uint8_t pad_size;
+				
+					// initialize the pad sizes based on whether the ostream is dec, hex, oct, bin.
+					std::ios_base::fmtflags fmt = ss.flags();
+					if(fmt & std::ios_base::dec) { // not supported
+						pad_size = 16;
+						ss << std::hex;
+					} else if(fmt & std::ios_base::hex) pad_size = 16; // pad count: 2^64-1=16 base 16 digits
+					else if(fmt & std::ios_base::oct) pad_size = 22;
+
+					for(uint16_t i=0;i<op_size;i++) {
+						if(op[i] != 0x0000000000000000ULL) pad_stopped=1;
+						if(pad_stopped) {
+							if(last_num)
+								ss << std::setfill('0') << std::setw(pad_size) << op[i];
+							else
+								ss << op[i]; // no padding
+							last_num = 1; // if not first print, pad
+						}
+					}
+					if(!pad_stopped) // if zero
+						ss << "0";
+				}
+	
+				// string conversion
+				operator std::string()
+				{
+					std::ostringstream ss;
+					to_ostringstream<std::ostringstream>(ss);
+					return ss.str();
+				}
 	
 				// convert between different bigints
 				template<bitsize_t n> // bitsize
@@ -210,7 +247,10 @@ namespace BigInt
 				
 					// initialize the pad sizes based on whether the ostream is dec, hex, oct, bin.
 					std::ios_base::fmtflags fmt = std::cout.flags();
-					if(fmt & std::ios_base::dec) pad_size = 20;
+					if(fmt & std::ios_base::dec) {
+						pad_size = 16;
+						std::cout << std::hex;
+					}
 					else if(fmt & std::ios_base::hex) pad_size = 16; // pad count: 2^64-1=16 base 16 digits
 					else if(fmt & std::ios_base::oct) pad_size = 22;
 					else pad_size = 64; // bin
@@ -230,11 +270,12 @@ namespace BigInt
 		
 			protected:
 				// remove 0x if starting with 0x
-				constexpr inline bool rm_trailhex(const char *&num)
+				constexpr inline bool rm_trailhex(const char *&num, size_t &input_len)
 				{
 					std::string_view str(const_cast<char*>(num), 2);
 					if (str == "0x") {
 						num += 2; // delete the 0x
+						input_len-=2;
 						return 1;
 					}
 					return 0;
@@ -249,10 +290,10 @@ namespace BigInt
 				}
 		
 				// check if input is base16
-				constexpr bool input_hex(const char *&input, size_t input_len)
+				constexpr bool input_hex(const char *&input, size_t &input_len)
 				{
 					// check if input is hex
-					bool _is_hex = rm_trailhex(input); // remove trailing character if it exists
+					bool _is_hex = rm_trailhex(input, input_len); // remove trailing character if it exists
 					if(!_is_hex) { // if no hex trail character '0x'
 						_is_hex = is_hex(input, input_len); // check if input is hex
 						return _is_hex;
@@ -324,10 +365,10 @@ namespace BigInt
 							std::stringstream ss;
 							ss << std::hex << get_substring(input, 0,ind);
 							ss >> op[op_size-multiple16_count-1];
-		   			   	 	for(bitsize_t i=multiple16_count;i>0;i--) op[op_size-i] = tmp[multiple16_count-i];
+		   			   	 	for(bitsize_t i=multiple16_count+1;i --> 1;) op[op_size-i] = tmp[multiple16_count-i];
 		   			   	} else {
 		   			   		op_nonleading_i = op_size-multiple16_count; // if length is a multiple of part_size
-		   			   	 	for(bitsize_t i=multiple16_count;i>0;i--) op[op_size-i+1] = tmp[multiple16_count-i];
+		   			   	 	for(bitsize_t i=multiple16_count+1;i --> 1;) op[op_size-i] = tmp[multiple16_count-i];
 		   			   	}
 					} else { // length < part_size
 		   				tmp = new uint64_t[1];
@@ -347,10 +388,10 @@ namespace BigInt
 		BigUint<bitsize> pow(BigUint<bitsize> base, BigUint<bitsize> exp);
 		
 	};
-	using uint192_t =  SelectType<uint16_t>::BigUint<192>;
-	using uint256_t =  SelectType<uint16_t>::BigUint<256>;
-	using uint384_t =  SelectType<uint16_t>::BigUint<384>;
-	using uint512_t =  SelectType<uint16_t>::BigUint<512>;
+	using uint192_t  = SelectType<uint16_t>::BigUint<192>;
+	using uint256_t  = SelectType<uint16_t>::BigUint<256>;
+	using uint384_t  = SelectType<uint16_t>::BigUint<384>;
+	using uint512_t  = SelectType<uint16_t>::BigUint<512>;
 	using uint1024_t = SelectType<uint16_t>::BigUint<1024>;
 
 	// types of bitsize
@@ -358,33 +399,45 @@ namespace BigInt
 	typedef SelectType<uint32_t> selected_type32;
 	typedef SelectType<uint64_t> selected_type64;
 	typedef SelectType<__uint128_t> selected_type128;
+
+
+	// stringstream
+	template<uint16_t bitsize>
+	std::stringstream& operator<<(std::stringstream& ss, selected_type16::BigUint<bitsize> num)
+	{
+		num.to_ostringstream(ss);
+		return ss;
+	}
 	
+	// stringstream
+	template<uint32_t bitsize>
+	std::stringstream& operator<<(std::stringstream& ss, selected_type32::BigUint<bitsize> num)
+	{
+		num.to_ostringstream(ss);
+		return ss;
+	}
+	
+	// stringstream
+	template<uint64_t bitsize>
+	std::stringstream& operator<<(std::stringstream& ss, selected_type64::BigUint<bitsize> num)
+	{
+		num.to_ostringstream(ss);
+		return ss;
+	}
+	
+	// stringstream
+	template<__uint128_t bitsize>
+	std::stringstream& operator<<(std::stringstream& ss, selected_type128::BigUint<bitsize> num)
+	{
+		num.to_ostringstream(ss);
+		return ss;
+	}
+
 	// output stream operator
 	template<uint16_t bitsize>
 	std::ostream& operator<<(std::ostream& cout, selected_type16::BigUint<bitsize> toprint)
 	{
-		bool pad_stopped = 0; // if pad stopped, then print the rest, including zero values
-		bool last_num = 0;
-		uint8_t pad_size;
-	
-		// initialize the pad sizes based on whether the ostream is dec, hex, oct, bin.
-		std::ios_base::fmtflags fmt = cout.flags();
-		if(fmt & std::ios_base::dec) pad_size = 20;
-		else if(fmt & std::ios_base::hex) pad_size = 16; // pad count: 2^64-1=16 base 16 digits
-		else if(fmt & std::ios_base::oct) pad_size = 22;
-		else pad_size = 64; // bin
-		for(uint16_t i=0;i<toprint.op_size;i++) {
-			if(toprint.op[i] != 0x0000000000000000ULL) pad_stopped=1;
-			if(pad_stopped) {
-				if(last_num)
-					cout << std::setfill('0') << std::setw(pad_size) << toprint.op[i];
-				else
-					cout << toprint.op[i]; // no padding
-				last_num = 1; // if not first print, pad
-			}
-		}
-		if(!pad_stopped) // if zero
-			cout << "0";
+		toprint.to_ostringstream(cout);
 		return cout;
 	}
 
@@ -392,28 +445,7 @@ namespace BigInt
 	template<uint32_t bitsize>
 	std::ostream& operator<<(std::ostream& cout, selected_type32::BigUint<bitsize> toprint)
 	{
-		bool pad_stopped = 0; // if pad stopped, then print the rest, including zero values
-		bool last_num = 0;
-		uint8_t pad_size;
-	
-		// initialize the pad sizes based on whether the ostream is dec, hex, oct, bin.
-		std::ios_base::fmtflags fmt = cout.flags();
-		if(fmt & std::ios_base::dec) pad_size = 20;
-		else if(fmt & std::ios_base::hex) pad_size = 16; // pad count: 2^64-1=16 base 16 digits
-		else if(fmt & std::ios_base::oct) pad_size = 22;
-		else pad_size = 64; // bin
-		for(uint16_t i=0;i<toprint.op_size;i++) {
-			if(toprint.op[i] != 0x0000000000000000ULL) pad_stopped=1;
-			if(pad_stopped) {
-				if(last_num)
-					cout << std::setfill('0') << std::setw(pad_size) << toprint.op[i];
-				else
-					cout << toprint.op[i]; // no padding
-				last_num = 1; // if not first print, pad
-			}
-		}
-		if(!pad_stopped) // if zero
-			cout << "0";
+		toprint.to_ostringstream(cout);
 		return cout;
 	}
 	 
@@ -421,28 +453,7 @@ namespace BigInt
 	template<uint64_t bitsize>
 	std::ostream& operator<<(std::ostream& cout, selected_type64::BigUint<bitsize> toprint)
 	{
-		bool pad_stopped = 0; // if pad stopped, then print the rest, including zero values
-		bool last_num = 0;
-		uint8_t pad_size;
-	
-		// initialize the pad sizes based on whether the ostream is dec, hex, oct, bin.
-		std::ios_base::fmtflags fmt = cout.flags();
-		if(fmt & std::ios_base::dec) pad_size = 20;
-		else if(fmt & std::ios_base::hex) pad_size = 16; // pad count: 2^64-1=16 base 16 digits
-		else if(fmt & std::ios_base::oct) pad_size = 22;
-		else pad_size = 64; // bin
-		for(uint16_t i=0;i<toprint.op_size;i++) {
-			if(toprint.op[i] != 0x0000000000000000ULL) pad_stopped=1;
-			if(pad_stopped) {
-				if(last_num)
-					cout << std::setfill('0') << std::setw(pad_size) << toprint.op[i];
-				else
-					cout << toprint.op[i]; // no padding
-				last_num = 1; // if not first print, pad
-			}
-		}
-		if(!pad_stopped) // if zero
-			cout << "0";
+		toprint.to_ostringstream(cout);
 		return cout;
 	}
 	 
@@ -450,28 +461,7 @@ namespace BigInt
 	template<__uint128_t bitsize>
 	std::ostream& operator<<(std::ostream& cout, selected_type128::BigUint<bitsize> toprint)
 	{
-		bool pad_stopped = 0; // if pad stopped, then print the rest, including zero values
-		bool last_num = 0;
-		uint8_t pad_size;
-	
-		// initialize the pad sizes based on whether the ostream is dec, hex, oct, bin.
-		std::ios_base::fmtflags fmt = cout.flags();
-		if(fmt & std::ios_base::dec) pad_size = 20;
-		else if(fmt & std::ios_base::hex) pad_size = 16; // pad count: 2^64-1=16 base 16 digits
-		else if(fmt & std::ios_base::oct) pad_size = 22;
-		else pad_size = 64; // bin
-		for(uint16_t i=0;i<toprint.op_size;i++) {
-			if(toprint.op[i] != 0x0000000000000000ULL) pad_stopped=1;
-			if(pad_stopped) {
-				if(last_num)
-					cout << std::setfill('0') << std::setw(pad_size) << toprint.op[i];
-				else
-					cout << toprint.op[i]; // no padding
-				last_num = 1; // if not first print, pad
-			}
-		}
-		if(!pad_stopped) // if zero
-			cout << "0";
+		toprint.to_ostringstream(cout);
 		return cout;
 	}
 	 
@@ -514,6 +504,46 @@ namespace BigInt
 		cin >> num;
 		input = num;
 		return cin;
+	}
+
+	// stringstream operator
+	template<uint16_t bitsize>
+	std::stringstream& operator>>(std::stringstream& ss, selected_type16::BigUint<bitsize> &input)
+	{
+		std::string num;
+		ss >> num;
+		input = num;
+		return ss;
+	}
+
+	// stringstream operator
+	template<uint32_t bitsize>
+	std::stringstream& operator>>(std::stringstream& ss, selected_type32::BigUint<bitsize> &input)
+	{
+		std::string num;
+		ss >> num;
+		input = num;
+		return ss;
+	}
+
+	// stringstream operator
+	template<uint64_t bitsize>
+	std::stringstream& operator>>(std::stringstream& ss, selected_type64::BigUint<bitsize> &input)
+	{
+		std::string num;
+		ss >> num;
+		input = num;
+		return ss;
+	}
+
+	// stringstream operator
+	template<__uint128_t bitsize>
+	std::stringstream& operator>>(std::stringstream& ss, selected_type128::BigUint<bitsize> &input)
+	{
+		std::string num;
+		ss >> num;
+		input = num;
+		return ss;
 	}
 
 }; /* NAMESPACE BIGINT */

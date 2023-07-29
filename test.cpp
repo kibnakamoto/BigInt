@@ -424,18 +424,6 @@ class Benchmark
 
 		virtual void reset() {
 				randomize();
-			//_type number = "2337616833552046603458334740849159417653411302789319245661"; // 232-bit hex
-			//_type number2 = "2337616833552046603458334740849159417653411302789319245660"; // 232-bit hex
-			//_type zero = "0";
-			//_type one = "1";
-			//_type two = "2";
-			//_type rand = "2043835430954379549087549803752094857685945098653096065479"; // 232-bit hex
-			//_type and_ex = "13439085734205734"; // 232-bit hex
-			//_type example = "4423905842305789076053609538769048324785042058710953420857"; // 232-bit hex
-			//_type arithmetic_ex = "134395843534503845740957390690572"; // 232-bit hex
-			//_type _2000 ="2000"; // mul
-			//_type div_ex = "2000309429034920423834902"; // div
-			//_type _23049 = "23049"; // mod
 		}
 		static constexpr const char hex_digits[17] = "0123456789abcdef";
 
@@ -445,25 +433,17 @@ class Benchmark
 
     		std::random_device randDev;
     		std::mt19937 generator(randDev() ^ time(NULL));
-    		std::uniform_int_distribution<bitsize_t> distr(0, _bitsize/4);
-    		std::uniform_int_distribution<uint8_t> distr2(0, 2);
+    		std::uniform_int_distribution<bitsize_t> distr(0, _bitsize);
+    		std::uniform_int_distribution<uint8_t> distr2(0, 16);
 			bitsize_t length = distr(generator);
-			bool bitset[length];
 			bitsize_t hexlen = length%4==0 ? length/4 : length/4+1;
-			uint8_t hexset[hexlen];
-			std::string str;
-			char* ptr = &str[0];
-			for(bitsize_t i=0;i<length;i++) {
-				if(i%4) hexset[i] = 0x0000;
-				bitset[i] = distr2(generator);
-				hexset[i/4] <<= 1;
-				hexset[i/4] |= bitset[i];
-				if(i%4==3) {
-					str += hex_digits[hexset[i/4] >> 4];
-					str += hex_digits[hexset[i/4] & 0x0f];
-				}
+			std::string *str = new std::string;
+			for(bitsize_t i=0;i<hexlen;i++) {
+				*str += hex_digits[distr2(generator)];
 			}
-			return str;
+			std::string ret = *str;
+			delete str;
+			return ret;
 		}
 
 		virtual void randomize() {
@@ -922,6 +902,9 @@ class UintTBenchmark
 			_2000 		= randuT();
 			div_ex		= randuT();
 			_23049		= randuT();
+			two		= randuT();
+			one		= randuT();
+			zero		= randuT();
 		}
 
 		uint64_t randuT()
@@ -1323,9 +1306,9 @@ uint64_t *benchmark_tests_T(uint64_t &total_time, uint32_t count=100)
 int main()
 {
 	typedef uint32_t bitsize_t;
-	constexpr const static bitsize_t bitsize = 512; // 2147483648;
-	typedef HugeUint<bitsize> biguint_t;
-	static uint32_t count=100;
+	constexpr const static bitsize_t bitsize = 512; // 33554432; // 2147483648;
+	typedef LargeUint<bitsize> biguint_t;
+	static uint32_t count=1;
 
 	/************* VALUE TESTS *************/
 	// Test<biguint_t, bitsize_t, bitsize> tester = Test<biguint_t, bitsize_t, bitsize>();

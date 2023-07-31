@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string.h>
 #include <sstream>
+#include <chrono>
 
 #include "bigint.h"
 
@@ -31,16 +32,22 @@ int main()
 
 	// log2
 	// factorial
-	HugeUint<16384> num5=8; // 232-bit hex
-	num5 = num5.log2(num5);
+	uint512_t num5=8; // 232-bit hex
+	auto start1 = std::chrono::high_resolution_clock::now();
+	num5 = uint512_t::log2(num5);
+	auto end1 = std::chrono::high_resolution_clock::now();
 	std::cout << std::endl << num5;
+	std::cout << std::endl << "Calculation time: " << std::dec << std::chrono::duration_cast< std::chrono::microseconds >(end1-start1);
 	std::cout << std::endl;
 	
 
 	// factorial
-	LargeUint<262144> num6=10000; // 232-bit hex
+	LargeUint<1048576> num6=10000; // 232-bit hex
+	auto start2 = std::chrono::high_resolution_clock::now();
 	num6 = num6.factorial();
-	std::cout << std::endl << num6;
+	auto end2 = std::chrono::high_resolution_clock::now();
+	std::cout << std::endl << std::hex << num6;
+	std::cout << std::endl << "Calculation time: " << std::dec << std::chrono::duration_cast< std::chrono::milliseconds >(end2-start2);
 	std::cout << std::endl;
 	return 0;
 }

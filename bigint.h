@@ -277,6 +277,12 @@ namespace BigInt
 			    return (n > "1") ? BigUint(1) + log2(n >> bitsize_t(1)) : BigUint(0);
 			}
 
+			// log2
+			constexpr BigUint log2()
+			{
+			    return (*this > "1") ? BigUint(1) + log2(*this >> bitsize_t(1)) : BigUint(0);
+			}
+
 			constexpr BigUint factorial()
 			{
       			BigUint p = 1, r = 1;

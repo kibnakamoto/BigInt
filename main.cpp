@@ -15,7 +15,7 @@ int main()
 	std::cout << "\nhex num2: " << std::hex << num2; // 2337616833552046603458334740849159417653411302789319245661
 	auto num3 = num + num2;
 	//uint192_t num4 = std::string("134395843534503845740957390690572"); // 132-bit hex
-	uint192_t num4 = std::string("13439584353450384574095739069057212345678"); // 132-bit hex
+	uint512_t num4 = std::string("13439584353450384574095739069057212345678"); // 132-bit hex
 	std::cout << "\nnum+num2: " << std::hex << num3 << std::endl; // 466ec2d066aa408cc068b0668e810922b282eca6822604f1263248acc2
 	std::cout << "\nhex num4: " << std::hex << num4; // 13439584353450384574095739069057212345678
 
@@ -28,6 +28,19 @@ int main()
 	std::cout << "\npow(num, 2): " << pow(num, uint256_t(2)); // b9fe143015ff9a71ef6f1d05068d2b9a565f8dbb28b4c8bdb2b2416d5a6d50c1, answer bigger than 256-bit, so and operator fixes it.
 	BigUint<256> a = "2"; // 32768
 	std::cout << "\npow: " << pow(a, BigUint<256>(255)); // 8000000000000000000000000000000000000000000000000000000000000000
+
+	// log2
+	// factorial
+	HugeUint<16384> num5=8; // 232-bit hex
+	num5 = num5.log2(num5);
+	std::cout << std::endl << num5;
+	std::cout << std::endl;
+	
+
+	// factorial
+	LargeUint<262144> num6=10000; // 232-bit hex
+	num6 = num6.factorial();
+	std::cout << std::endl << num6;
 	std::cout << std::endl;
 	return 0;
 }

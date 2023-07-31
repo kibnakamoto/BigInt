@@ -1305,10 +1305,10 @@ uint64_t *benchmark_tests_T(uint64_t &total_time, uint32_t count=100)
 
 int main()
 {
-	typedef uint32_t bitsize_t;
-	constexpr const static bitsize_t bitsize = 512; // 33554432; // 2147483648;
-	typedef LargeUint<bitsize> biguint_t;
-	static uint32_t count=1;
+	typedef uint16_t bitsize_t;
+	constexpr const static bitsize_t bitsize = 512; // 268435456;
+	typedef BigUint<bitsize> biguint_t;
+	static uint32_t count=100;
 
 	/************* VALUE TESTS *************/
 	// Test<biguint_t, bitsize_t, bitsize> tester = Test<biguint_t, bitsize_t, bitsize>();
@@ -1348,6 +1348,7 @@ int main()
 	uint64_t *average_time_uint64 = benchmark_tests_T<uint64_t>(uint64_time, count);
 	std::cout << "\n\n------------------------\nAVERAGE TIME FOR uint128:\n------------------------\n";
 	uint64_t *average_time_uint128 = benchmark_tests_T<__uint128_t>(uint128_time, count);
+	std::cout << "\n\n\n\n------------------------\nAVERAGE TIME FOR Bigint:\n------------------------\n";
 
 	// assign times to zero
 	for(uint16_t j=0;j<sizeof(average_time)/sizeof(average_time[0]);j++) {

@@ -240,12 +240,9 @@ namespace BigInt
 	constexpr bool SelectType<bitsize_t>::BigUint<bitsize>::operator==(const BigUint &num) const
 	{
 		bool equal = 0;
-		if constexpr(op_size >= num.op_size) {
-			for(bitsize_t i=num.op_size;i<op_size && !equal;i++) equal |= op[i] == 0;
-			for(bitsize_t i=0;i<num.op_size && !equal;i++) equal |= op[i] == num.op[i];
-		} else {
-			for(bitsize_t i=op_size;i<num.op_size && !equal;i++) equal |= num.op[i] == 0;
-			for(bitsize_t i=0;i<op_size && !equal;i++) equal |= op[i] == num.op[i];
+		for(bitsize_t i=0;i<op_size;i++) {
+			equal = op[i] == num.op[i];
+			if (!equal) return 0;
 		}
 		return equal;
 	}
@@ -276,12 +273,9 @@ namespace BigInt
 	constexpr bool SelectType<bitsize_t>::BigUint<bitsize>::operator!=(const BigUint &num) const
 	{
 		bool notequal = 0;
-		if constexpr(op_size >= num.op_size) {
-			for(bitsize_t i=num.op_size;i<op_size && !notequal;i++) notequal |= op[i] != 0;
-			for(bitsize_t i=0;i<num.op_size && !notequal;i++) notequal |= op[i] != num.op[i];
-		} else {
-			for(bitsize_t i=op_size;i<num.op_size && !notequal;i++) notequal |= num.op[i] != 0;
-			for(bitsize_t i=0;i<op_size && !notequal;i++) notequal |= op[i] != num.op[i];
+		for(bitsize_t i=0;i<op_size;i++) {
+			notequal |= op[i] != num.op[i];
+			if(notequal) return notequal;
 		}
 		return notequal;
 	}
@@ -568,13 +562,7 @@ namespace BigInt
 	[[nodiscard("discarded BigUint operator%")]]
 	constexpr SelectType<bitsize_t>::BigUint<bitsize> SelectType<bitsize_t>::BigUint<bitsize>::operator%(const BigUint &num)
 	{
-		// make copy of *this
-		uint64_t *o = new uint64_t[op_size];
-		memcpy(o, num.op, 8*op_size);
-		// for(bitsize_t i=0;i<op_size;i++) o[i] = num.op[i]; // for array
-		BigUint<bitsize> new_op = BigUint<bitsize>(o, op_size);
-		delete[] o;
-		return *this - (*this / new_op) * new_op;
+		return *this - (*this / num) * num;
 	}
 
 	template<typename bitsize_t>

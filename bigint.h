@@ -73,6 +73,8 @@ namespace BigInt
 				// assign uint64_t compile time array to op, there is also a non-garunteed compile time function. That is a constructor
 				template<bitsize_t len, std::array<uint64_t, len> tmp_op>
 				consteval BigUint assign_op() noexcept;
+
+				// destructor
 				~BigUint();
 	
 				// the next constructor as a compile-time function
@@ -148,7 +150,7 @@ namespace BigInt
 				inline constexpr operator uint64_t*() noexcept { return op; }
 	
 				constexpr operator bool() noexcept {
-					return op[op_size-1] != 0;
+					return *this != "0";
 				}
 	
 				constexpr operator uint64_t() noexcept {
@@ -235,6 +237,7 @@ namespace BigInt
 					delete[] num;
 					return new_obj;
 				}
+
 		
 				template<bitsize_t n> friend std::ostream& operator<<(std::ostream& cout, BigUint<n> toprint);
 
@@ -267,8 +270,50 @@ namespace BigInt
 					if(!pad_stopped) // if zero
 						std::cout << "0";
 			}
+
+			// log2
+			constexpr static BigUint log2(BigUint n)
+			{
+			    return (n > "1") ? BigUint(1) + log2(n >> bitsize_t(1)) : BigUint(0);
+			}
+
+			constexpr BigUint factorial()
+			{
+      			BigUint p = 1, r = 1;
+      			loop(op[op_size-1], p, r);
+      			return r << bitsize_t(nminussumofbits(op[op_size-1]));
+
+			}
 		
 			protected:
+				constexpr bitsize_t nminussumofbits(bitsize_t v)
+				{
+					uint64_t w = v;
+					w -= (0xaaaaaaaa & w) >> 1;
+					w = (w & 0x33333333) + ((w >> 2) & 0x33333333);
+					w = (w + (w >> 4)) & 0x0f0f0f0f;
+					w += w >> 8;
+					w += w >> 16;
+					return v - (w & 0xff);
+				}
+
+				constexpr void loop(bitsize_t n, BigUint &p, BigUint &r)
+  				{
+  				    if (n <= 2) return;
+  				    loop(n / 2, p, r);
+  				    p = p * part_product(n / 2 + 1 + ((n / 2) & 1), n - 1 + (n & 1));
+  				    r = r * p;
+  				}
+
+  				constexpr BigUint part_product(int n, int m)
+  				{
+  				    if (m <= (n + 1)) return (BigUint) n;
+  				    if (m == (n + 2)) return (BigUint) n * (BigUint)m; 
+  				    int k =  (n + m) / 2;
+  				    if ((k & 1) != 1) k = k - 1;
+  				    return part_product(n, k) * part_product(k + 2, m);
+  				}
+
 				// remove 0x if starting with 0x
 				constexpr inline bool rm_trailhex(const char *&num, size_t &input_len)
 				{
@@ -388,9 +433,9 @@ namespace BigInt
 		BigUint<bitsize> pow(BigUint<bitsize> base, BigUint<bitsize> exp);
 		
 	};
-	using uint192_t  = SelectType<uint16_t>::BigUint<192>;
+	//using uint192_t  = SelectType<uint16_t>::BigUint<192>; // remove until division algorithm works for non power of 2.
 	using uint256_t  = SelectType<uint16_t>::BigUint<256>;
-	using uint384_t  = SelectType<uint16_t>::BigUint<384>;
+	//using uint384_t  = SelectType<uint16_t>::BigUint<384>; // remove until division algorithm works for non power of 2.
 	using uint512_t  = SelectType<uint16_t>::BigUint<512>;
 	using uint1024_t = SelectType<uint16_t>::BigUint<1024>;
 

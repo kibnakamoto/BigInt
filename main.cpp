@@ -10,6 +10,7 @@ using namespace BigInt;
 
 int main()
 {
+	bool error;
 	uint256_t num="2337616833552046603458334740849159417653411302789319245661"; // 232-bit hex
 	uint256_t num2 = std::string("2337616833552046603458334740849159417653411302789319245661"); // 232-bit hex
 	std::cout << "int num: " << std::dec << num; // 949430380321334154025334326121912570021843741522655373338158005769825 // only correct when viewed as segments which are 151252985907061339800714876158150464900052788958496101369789809851389537
@@ -29,9 +30,15 @@ int main()
 	std::cout << "\npow(num, 2): " << pow(num, uint256_t(2)); // b9fe143015ff9a71ef6f1d05068d2b9a565f8dbb28b4c8bdb2b2416d5a6d50c1, answer bigger than 256-bit, so and operator fixes it.
 	BigUint<256> a = "2"; // 32768
 	std::cout << "\npow: " << pow(a, BigUint<256>(255)); // 8000000000000000000000000000000000000000000000000000000000000000
+	std::cout << std::endl;
+	std::cout << "random number: " << BigUint<256>::random("230944455039860432", "322438450683406843002304823", error); // 8000000000000000000000000000000000000000000000000000000000000000
+	if(error) {
+		// handle error
+	}
+	std::cout << std::endl;
+	exit(0);
 
 	// log2
-	// factorial
 	uint512_t num5=8; // 232-bit hex
 	auto start1 = std::chrono::high_resolution_clock::now();
 	num5 = uint512_t::log2(num5);

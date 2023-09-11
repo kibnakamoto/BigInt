@@ -2,6 +2,7 @@
 #define BIGINT_H
 
 #include <cstdint>
+#include <stdexcept>
 #include <string>
 #include <cstring>
 #include <iomanip>
@@ -10,6 +11,7 @@
 #include <array>
 #include <type_traits>
 #include <iostream>
+#include <random>
 
 // To define operations for all types instead of just multiples of 64. Calculate 2**bitsize (in 64-bit segments), every 64-bit segment is the modulo instead of UINT64_MAX, meaning replace UINT64_MAX WITH 2**bitsize
 
@@ -241,6 +243,115 @@ namespace BigInt
 		
 				template<bitsize_t n> friend std::ostream& operator<<(std::ostream& cout, BigUint<n> toprint);
 
+				// generate random number in range(from, to)
+				// error is true if wrong range
+				#pragma GCC diagnostic push
+				#pragma GCC diagnostic ignored "-Wconversion-null"
+				constexpr static BigUint random(BigUint from, BigUint to, bool &error) // give range of numbers
+				{
+        			std::random_device randdev;
+        			std::mt19937 generator(randdev() ^ time(NULL));
+					
+					// if range is wrong
+					if(from > to) {
+						//BigUint swapper = from;
+						//from = to;
+						//to = swapper;
+						error=1; // wrong range error
+						return NULL;
+					}
+
+					// check if random number is in range of UINT64_MAX
+					bool u64_range=true;
+					bitsize_t from_size = (uint64_t)from == 0 ? 0 : 1; // to_size is the uint64-bit size without padding
+					bitsize_t to_size = (uint64_t)to == 0 ? 0 : 1; // to_size is the uint64-bit size without padding
+					if (from_size || to_size) {
+						for(bitsize_t i=op_size;i --> 0;) {
+							if(to.__get_op()[i] != 0) {
+								if(u64_range) to_size = i;
+								if(i != op_size-1) u64_range=false;
+							}
+							if(from.__get_op()[i] != 0) {
+								from_size = i;
+								if(!u64_range) break;
+							}
+						}
+					} else {
+						if(to_size == 0) return "0";
+					}
+					to_size = op_size-to_size;
+					from_size = op_size-from_size;
+
+					// random length between op_size and to_size, the length of random data in 64-bit segments
+					bitsize_t rand_len = std::uniform_int_distribution<bitsize_t>(from_size, to_size)(generator);
+					rand_len = 2;
+
+					// if to < UINT64_MAX
+					if (u64_range || rand_len==1)
+							return std::uniform_int_distribution<uint64_t>(from.__get_op()[op_size-1], to.__get_op()[op_size-1])(generator);
+
+        			std::uniform_int_distribution<uint64_t>
+        			                             distr_64(0, UINT64_MAX);
+					uint64_t *num = new uint64_t[op_size];
+					for(bitsize_t i=0;i<rand_len;i++) { // set to zero if not in range of to
+						num[i] = 0x0000000000000000ULL;
+					}
+					for(bitsize_t i=op_size;i --> rand_len+1;) {
+						num[i] = distr_64(generator);
+					}
+					num[rand_len] = std::uniform_int_distribution<uint64_t>(from, to)(generator);
+
+					BigUint random_uint = BigUint(num, op_size);
+					delete[] num;
+					return random_uint;
+				}
+				#pragma GCC diagnostic pop
+
+				// generate random number up to to
+				constexpr static BigUint random(BigUint to)
+				{
+        			std::random_device randdev;
+        			std::mt19937 generator(randdev() ^ time(NULL));
+
+					// check if random number is in range of UINT64_MAX
+					bool u64_range=true;
+					bitsize_t to_size = (uint64_t)to == 0 ? 0 : 1; // to_size is the uint64-bit size without padding
+					if(to_size) {
+						for(bitsize_t i=op_size-1;i --> 0;) {
+							if(to.__get_op()[i] != 0) {
+								u64_range=false;
+								to_size = i;
+								break;
+							}
+						}
+						to_size = op_size-to_size;
+					} else {
+						return "0";
+					}
+
+					// random length between from_size and to_size, the length of random data in 64-bit segments
+					bitsize_t rand_len = std::uniform_int_distribution<bitsize_t>(1, to_size)(generator);
+
+					// if to < UINT64_MAX
+					if (u64_range || rand_len==1)
+							return std::uniform_int_distribution<uint64_t>(0, to.__get_op()[op_size-1])(generator);
+
+
+    				std::uniform_int_distribution<uint64_t>
+    				                             distr_64(0, UINT64_MAX);
+					uint64_t *num = new uint64_t[op_size];
+					for(bitsize_t i=0;i<rand_len;i++) { // set to zero if not in range of to
+						num[i] = 0x0000000000000000ULL;
+					}
+					for(bitsize_t i=op_size;i --> rand_len+1;) {
+						num[i] = distr_64(generator);
+					}
+					num[rand_len] = std::uniform_int_distribution<uint64_t>(0, to)(generator);
+					BigUint random_uint = BigUint(num, op_size);
+					delete[] num;
+					return random_uint;
+				}
+
 				// this print is for when stackoverflow error stops operator<<
 				void print()
 				{
@@ -269,27 +380,27 @@ namespace BigInt
 					}
 					if(!pad_stopped) // if zero
 						std::cout << "0";
-			}
+				}
 
-			// log2
-			constexpr static BigUint log2(BigUint n)
-			{
-			    return (n > "1") ? BigUint(1) + log2(n >> bitsize_t(1)) : BigUint(0);
-			}
+				// log2
+				constexpr static BigUint log2(BigUint n)
+				{
+				    return (n > "1") ? BigUint(1) + log2(n >> bitsize_t(1)) : BigUint(0);
+				}
 
-			// log2
-			constexpr BigUint log2()
-			{
-			    return (*this > "1") ? BigUint(1) + log2(*this >> bitsize_t(1)) : BigUint(0);
-			}
+				// log2
+				constexpr BigUint log2()
+				{
+				    return (*this > "1") ? BigUint(1) + log2(*this >> bitsize_t(1)) : BigUint(0);
+				}
 
-			constexpr BigUint factorial()
-			{
-      			BigUint p = 1, r = 1;
-      			loop(op[op_size-1], p, r);
-      			return r << bitsize_t(nminussumofbits(op[op_size-1]));
+				constexpr BigUint factorial()
+				{
+      				BigUint p = 1, r = 1;
+      				loop(op[op_size-1], p, r);
+      				return r << bitsize_t(nminussumofbits(op[op_size-1]));
 
-			}
+				}
 		
 			protected:
 				constexpr bitsize_t nminussumofbits(bitsize_t v)

@@ -312,7 +312,7 @@ namespace BigInt
 	
 		// condition to avoid iterating over non-existing members of op
 		const bitsize_t constexpr iterator = op_size < num.op_size ? op_size : num.op_size;
-		for(bitsize_t i=0;i<iterator;i++) {
+		for(bitsize_t i=iterator;i --> 0;) {
 			if(op[i] <= num.op[i]) {
 				less = 1;
 				break;
@@ -352,7 +352,7 @@ namespace BigInt
 	
 		// condition to avoid iterating over non-existing members of op
 		const constexpr bitsize_t iterator = op_size < num.op_size ? op_size : num.op_size;
-		for(bitsize_t i=0;i<iterator;i++) {
+		for(bitsize_t i=iterator;i --> 0;) {
 			if(op[i] >= num.op[i]) {
 				greater = 1;
 				break;

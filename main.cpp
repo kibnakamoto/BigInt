@@ -48,12 +48,12 @@ int main()
 	BigUint<256> a = "2"; // 32768
 	std::cout << "\npow: " << pow(a, BigUint<256>(255)); // 8000000000000000000000000000000000000000000000000000000000000000
 	std::cout << std::endl;
-	std::cout << "random number: " << BigUint<256>::random("23094445503", "322438450683406843002304823", error); // 8000000000000000000000000000000000000000000000000000000000000000
+	std::cout << "random number: " << BigUint<256>::random("23094445503", "322438450683406843002304823", error);
 	if(error) {
-		// handle error
+		// handle error, starting range is bigger than end (from > to)
 	}
 	std::cout << std::endl;
-	exit(0);
+	//exit(0);
 
 	// log2
 	uint512_t num5=8; // 232-bit hex
@@ -63,10 +63,14 @@ int main()
 	std::cout << std::endl << num5;
 	std::cout << std::endl << "Calculation time: " << std::dec << std::chrono::duration_cast< std::chrono::microseconds >(end1-start1);
 	std::cout << std::endl;
+
+	// 2^99,999
+	LargeUint<100000> n="2";
+	std::cout << "n: " << pow(n, LargeUint<100000>(100000-1)) << std::endl;
 	
 
 	// factorial
-	LargeUint<1048576> num6=10000; // 232-bit hex
+	LargeUint<1048576> num6=10000; // 1048576-bit hex
 	auto start2 = std::chrono::high_resolution_clock::now();
 	num6 = num6.factorial();
 	auto end2 = std::chrono::high_resolution_clock::now();

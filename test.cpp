@@ -1393,11 +1393,15 @@ int main()
 		if(i == 7) i++;
 		// compare to uint64 proportionally, meaning if 512-bits / 64-bits then compare the ratio
 		// if(i > 5 and i != 7 and i <40) std::cout << "\tuint64: " << average_time_uint64[i-6] << "\tbig/u64: " << ((double)timer.count()/(bitsize/64))/average_time_uint64[i-5];
+
 		// compare to uint64 upproportionally
+		// uint64_t value is given for comparitive reasons, if the ratio is <= bitsize/64, it's probably efficient
 		if(i >= 5 and i != 6 and i <40) std::cout << "\tuint64: " << average_time_uint64[i-6] << "ns\tbig/u64: " << (double)timer.count()/average_time_uint64[i-6];
 		std::cout << std::endl;
 	}
 	std::cout << std::endl << "Total time: " << total_time_bench/1000 << "µs" << std::endl;
+	
+	// a good idea what makes an algorithm efficient here is to check the big/u64 and if this number is <= bitsize/64, it's probably efficient
 
 	delete[] average_time_int8;
 	delete[] average_time_int16;
